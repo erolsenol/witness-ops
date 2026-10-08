@@ -33,6 +33,17 @@ jobs:
         run: |
           pnpm --ignore-scripts pack --dry-run --json > "$RUNNER_TEMP/witness-pack.json"
           node scripts/check-package-contents.mjs "$RUNNER_TEMP/witness-pack.json"
+      - name: Install the single package as a clean Linux consumer
+        run: |
+          mkdir -p "$RUNNER_TEMP/witness-package" "$RUNNER_TEMP/witness-consumer"
+          pnpm --ignore-scripts pack --pack-destination "$RUNNER_TEMP/witness-package" > /dev/null
+          package_version="$(node -p 'require("./package.json").version')"
+          npm install --prefix "$RUNNER_TEMP/witness-consumer" --no-save --no-audit --no-fund \
+            "$RUNNER_TEMP/witness-package/erol.senol-witness-ops-$package_version.tgz"
+          witness="$RUNNER_TEMP/witness-consumer/node_modules/.bin/witness"
+          test "$("$witness" --version)" = "$package_version"
+          "$witness" deploy schema config-v2 > /dev/null
+          "$witness" db --help > /dev/null
 
   action-consumer:
     runs-on: ubuntu-24.04
