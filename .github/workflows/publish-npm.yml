@@ -42,7 +42,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm publish --access public --tag alpha --provenance --no-git-checks
-      - name: Wait for registry visibility and verify source commit
+      - name: Wait for registry visibility and verify source package
         env:
           PACKAGE_VERSION: ${{ github.ref_name }}
         run: |
@@ -52,7 +52,10 @@ jobs:
             if [ "$attempt" -eq 48 ]; then exit 1; fi
             sleep 10
           done
-          node scripts/check-registry-release.mjs "$package_version"
+          mkdir -p "$RUNNER_TEMP/witness-package"
+          pnpm --ignore-scripts pack --pack-destination "$RUNNER_TEMP/witness-package" > /dev/null
+          node scripts/check-registry-release.mjs "$package_version" \
+            "$RUNNER_TEMP/witness-package/erol.senol-witness-ops-$package_version.tgz"
       - name: Smoke-test the published registry package
         env:
           PACKAGE_VERSION: ${{ github.ref_name }}

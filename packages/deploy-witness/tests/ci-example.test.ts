@@ -93,7 +93,7 @@ describe("published CI consumer examples", () => {
     }
 
     expect(steps.map((step) => step.name)).toContain(
-      "Wait for registry visibility and verify source commit",
+      "Wait for registry visibility and verify source package",
     );
     expect(steps.map((step) => step.name)).toContain(
       "Smoke-test the published registry package",
@@ -101,7 +101,7 @@ describe("published CI consumer examples", () => {
     expect(
       steps.find(
         (step) =>
-          step.name === "Wait for registry visibility and verify source commit",
+          step.name === "Wait for registry visibility and verify source package",
       )?.run,
     ).toContain("for attempt in {1..48}");
     const registryCheck = await readFile(
@@ -109,6 +109,7 @@ describe("published CI consumer examples", () => {
       "utf8",
     );
     expect(registryCheck).toContain("metadata.gitHead !== process.env.GITHUB_SHA");
+    expect(registryCheck).toContain("metadata.dist.integrity !== integrity");
     expect(registryCheck).toContain('metadata._npmUser?.name !== "erol.senol"');
     expect(
       steps.find(
