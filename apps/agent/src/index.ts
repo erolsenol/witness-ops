@@ -29,13 +29,13 @@ const server = await createServer({
   store,
   scheduler,
   readCoolify: () => coolify.read(config.projects),
-  readReleaseEvidence: (projectId) => {
+  readReleaseEvidence: (projectId, fresh) => {
     const selected = projectId ?? legacyEvidenceProject;
     const project = config.projects.find((item) => item.id === selected);
     if (!project || (!project.releaseEvidence && project.id !== legacyEvidenceProject)) {
       return new ReleaseEvidenceReader({ target: "" }).read();
     }
-    return releaseReaders.get(project.id)!.read();
+    return releaseReaders.get(project.id)!.read({ fresh: fresh === true });
   },
   consoleDirectory: join(root, "apps", "console", "dist"),
   authToken,

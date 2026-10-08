@@ -8,6 +8,8 @@ DeployWitness uses read-only provider access. Its provider response, runtime pro
 
 Release jobs use a shared SQLite operation lock across the CLI and app processes. A concurrent operation waits for the first to finish before it starts. Uncertain deploy or rollback outcomes become `needs_attention`; the agent never retries them automatically. RestoreWitness's explicit restore command still refuses known source matches and nonempty targets. Database drill uses a disposable sandbox.
 
+Rollback rechecks the remote ledger and exact running image identities after the operation lock is acquired. A candidate shown by an earlier console read cannot authorize a rollback if the runtime has changed while the job was queued.
+
 The SQLite journal and report files are local operational data. Reports may include endpoint names, identifiers, and recovery metadata. The console serves them only from a fixed report directory for known run IDs. Keep the data directory private and do not attach reports to public issues.
 
 Remote browser use requires SSH access on both ends. The Mac remains the executor and the agent remains bound to loopback. See [SSH access](docs/REMOTE.md).

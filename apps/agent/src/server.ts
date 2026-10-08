@@ -15,7 +15,7 @@ export interface ServerDependencies {
   readonly scheduler: Scheduler;
   readonly consoleDirectory?: string;
   readonly readCoolify?: () => Promise<CoolifySnapshot>;
-  readonly readReleaseEvidence?: (projectId?: string) => Promise<ReleaseEvidenceSnapshot>;
+  readonly readReleaseEvidence?: (projectId?: string, fresh?: boolean) => Promise<ReleaseEvidenceSnapshot>;
   readonly authToken?: string;
 }
 
@@ -86,7 +86,7 @@ export async function createServer(dependencies: ServerDependencies): Promise<Fa
       const project = dependencies.projects.find((item) => item.id === parsed.data.projectId);
       if (!project) return reply.code(404).send({ error: "Unknown project." });
       if (!project.rollback) return reply.code(409).send({ error: "Rollback is not configured for this project." });
-      const evidence = await dependencies.readReleaseEvidence?.(project.id);
+      const evidence = await dependencies.readReleaseEvidence?.(project.id, true);
       if (!evidence || !isVerifiedRollbackCandidate(evidence, parsed.data.expectedSha)) {
         return reply.code(409).send({ error: "Rollback requires a listed healthy candidate and matching current runtime images." });
       }

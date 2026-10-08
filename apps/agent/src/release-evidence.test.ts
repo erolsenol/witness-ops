@@ -67,6 +67,20 @@ describe("ReleaseEvidenceReader", () => {
     expect(calls).toBe(1);
   });
 
+  it("bypasses display cache for a fresh rollback decision", async () => {
+    let calls = 0;
+    const reader = new ReleaseEvidenceReader({ target: "root@host.example", ...evidenceOptions, runner: async () => {
+      calls += 1;
+      return [
+        record(currentSha, "current"), record(previousSha, "candidate"),
+        runtime("web", calls === 1 ? currentSha : previousSha), runtime("mobile", currentSha),
+      ].join("\n");
+    } });
+    expect((await reader.read()).runtimeMatchesCurrent).toBe(true);
+    expect((await reader.read({ fresh: true })).runtimeMatchesCurrent).toBe(false);
+    expect(calls).toBe(2);
+  });
+
   it("does not claim identity when a runtime image differs from the ledger", async () => {
     const reader = new ReleaseEvidenceReader({ target: "root@host.example", ...evidenceOptions, runner: async () => [
       record(currentSha, "current"),

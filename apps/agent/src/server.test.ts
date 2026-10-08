@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createServer } from "./server.ts";
 import { RunStore } from "./store.ts";
 import { Scheduler } from "./scheduler.ts";
@@ -131,10 +131,10 @@ describe("local API boundary", () => {
         smoke: { label: "Smoke", command: "npm", args: ["run", "smoke", "{sha}"] },
       },
     };
-    const readReleaseEvidence = async (): Promise<ReleaseEvidenceSnapshot> => ({
+    const readReleaseEvidence = vi.fn(async (): Promise<ReleaseEvidenceSnapshot> => ({
       availability: "ready", checkedAt: "2026-10-08T00:00:00.000Z", current: null,
       rollbackCandidates: [], runtimeImages: [], runtimeMatchesCurrent: false, error: null,
-    });
+    }));
     const server = await setup([project], readReleaseEvidence);
     const response = await server.inject({
       method: "POST", url: "/api/runs", headers: { "x-witness-request": "1" },
@@ -142,5 +142,6 @@ describe("local API boundary", () => {
     });
     expect(response.statusCode).toBe(409);
     expect(response.json()).toMatchObject({ error: expect.stringContaining("matching current runtime images") });
+    expect(readReleaseEvidence).toHaveBeenCalledWith("guven", true);
   });
 });

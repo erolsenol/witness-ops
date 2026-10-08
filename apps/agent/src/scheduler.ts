@@ -1,9 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
-import type { Project, ReleaseAction, RunRecord, ToolAction } from "@deploy-relay/contracts";
+import type { Project, ReleaseAction, ReleaseEvidenceSnapshot, RunRecord, ToolAction } from "@deploy-relay/contracts";
 import { buildProject, checkProject, deployProject, executeLockedStep, inspectProject, projectNodeVersion, rollbackProject } from "@deploy-relay/core";
+import { isVerifiedRollbackCandidate, ReleaseEvidenceReader } from "./release-evidence.ts";
 import { RunStore } from "./store.ts";
 import { reportPath, runDatabaseCheck, runDeployVerification } from "./tool-runner.ts";
+
+function readRollbackEvidence(project: Project): Promise<ReleaseEvidenceSnapshot> {
+  return new ReleaseEvidenceReader(project.releaseEvidence ? {
+    target: project.releaseEvidence.sshTarget,
+    ledgerDirectory: project.releaseEvidence.ledgerDirectory,
+    imagePrefix: project.releaseEvidence.imagePrefix,
+    containers: project.releaseEvidence.containers,
+  } : {}).read();
+}
 
 export class Scheduler {
   #tail: Promise<void> = Promise.resolve();
@@ -12,6 +22,7 @@ export class Scheduler {
     private readonly projects: readonly Project[],
     private readonly store: RunStore,
     private readonly executeStep = executeLockedStep,
+    private readonly readReleaseEvidence = readRollbackEvidence,
   ) {}
 
   enqueue(projectId: string, action: ReleaseAction, expected?: { readonly sha: string; readonly manifestHash?: string }): RunRecord {
@@ -122,6 +133,10 @@ export class Scheduler {
         }
       } else if (action === "rollback") {
         if (!expected?.sha) throw new Error("A previous healthy release SHA is required.");
+        const evidence = await this.readReleaseEvidence(project);
+        if (!isVerifiedRollbackCandidate(evidence, expected.sha)) {
+          throw new Error("Rollback evidence changed while queued; inspect current runtime images and select a healthy candidate again.");
+        }
         await rollbackProject(project, expected.sha, {
           inspect: inspectProject,
           nodeVersion: projectNodeVersion(project),

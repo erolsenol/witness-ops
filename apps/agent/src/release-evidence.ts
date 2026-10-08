@@ -98,8 +98,8 @@ export class ReleaseEvidenceReader {
     this.runner = options.runner ?? runSsh;
   }
 
-  async read(): Promise<ReleaseEvidenceSnapshot> {
-    if (this.#cached && this.#cached.expiresAt > Date.now()) return this.#cached.snapshot;
+  async read(options: { readonly fresh?: boolean } = {}): Promise<ReleaseEvidenceSnapshot> {
+    if (!options.fresh && this.#cached && this.#cached.expiresAt > Date.now()) return this.#cached.snapshot;
     const checkedAt = new Date().toISOString();
     if (!/^[A-Za-z0-9_-]+@[A-Za-z0-9.-]+$/.test(this.target) ||
       !/^\/[A-Za-z0-9/_-]+$/.test(this.ledgerDirectory ?? "") ||
