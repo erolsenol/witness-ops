@@ -26,7 +26,13 @@ if (request.dryRun) {
   process.stdout.write(`${JSON.stringify(plans, null, 2)}\n`);
 } else {
   if (request.action === "rollback" && request.expectedSha) {
-    const evidence = await new ReleaseEvidenceReader().read();
+    const project = selected[0]!;
+    const evidence = await new ReleaseEvidenceReader(project.releaseEvidence ? {
+      target: project.releaseEvidence.sshTarget,
+      ledgerDirectory: project.releaseEvidence.ledgerDirectory,
+      imagePrefix: project.releaseEvidence.imagePrefix,
+      containers: project.releaseEvidence.containers,
+    } : {}).read();
     if (!isVerifiedRollbackCandidate(evidence, request.expectedSha)) {
       throw new Error("Rollback requires a listed healthy candidate and matching current runtime images.");
     }

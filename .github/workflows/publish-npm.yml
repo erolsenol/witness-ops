@@ -11,7 +11,6 @@ jobs:
   publish:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-24.04
-    environment: npm-publish
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: pnpm/action-setup@v4
@@ -29,19 +28,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       - run: git diff --exit-code -- dist/action-bundle/index.js
-      - name: Verify npm publisher account
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::error::Set NPM_TOKEN for the erol.senol account in the npm-publish environment."
-            exit 1
-          fi
-          test "$(npm whoami --registry=https://registry.npmjs.org)" = "erol.senol"
-      - name: Publish as erol.senol with provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm publish --access public --tag alpha --provenance --no-git-checks
+      - name: Publish using npm Trusted Publishing
+        run: npm publish --access public --tag alpha --provenance
       - name: Wait for registry visibility and verify source package
         env:
           PACKAGE_VERSION: ${{ github.ref_name }}

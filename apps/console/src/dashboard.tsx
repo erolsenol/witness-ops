@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Card, Empty, Input, Layout, List, Modal, Space, Tag, Typography } from "antd";
+import { Alert, Button, Card, Empty, Input, Layout, List, message, Modal, Select, Space, Tag, Typography } from "antd";
 import type { BuildArtifactSummary, CoolifyApplicationStatus, ProjectState, ReleaseEvidenceSnapshot, ReleaseRecordEvidence, RunAction, RunStatus } from "@deploy-relay/contracts";
-import { deployRun, getArtifacts, getCoolify, getEvents, getProjects, getReleaseEvidence, getRuns, rollbackRun, startRun } from "./api.ts";
+import { deployRun, getArtifacts, getCoolify, getEvents, getProjects, getReleaseEvidence, getRuns, openReport, rollbackRun, startRun } from "./api.ts";
 
 const { Header, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -112,10 +112,19 @@ export function Dashboard() {
   const [rollbackCandidate, setRollbackCandidate] = useState<ProjectState | null>(null);
   const [rollbackSha, setRollbackSha] = useState("");
   const [rollbackConfirmation, setRollbackConfirmation] = useState("");
+  const [selectedReleaseProjectId, setSelectedReleaseProjectId] = useState<string | null>(null);
   const projects = useQuery({ queryKey: ["projects"], queryFn: getProjects, refetchInterval: 5000 });
+  const rollbackProjects = projects.data?.filter((project) => project.rollbackAvailable) ?? [];
+  const releaseProjectId = rollbackProjects.some((project) => project.id === selectedReleaseProjectId)
+    ? selectedReleaseProjectId : rollbackProjects[0]?.id;
   const artifacts = useQuery({ queryKey: ["artifacts"], queryFn: getArtifacts, refetchInterval: 5000 });
   const coolify = useQuery({ queryKey: ["coolify"], queryFn: getCoolify, refetchInterval: 15_000 });
-  const releaseEvidence = useQuery({ queryKey: ["release-evidence"], queryFn: getReleaseEvidence, refetchInterval: 30_000 });
+  const releaseEvidence = useQuery({
+    queryKey: ["release-evidence", releaseProjectId],
+    queryFn: () => getReleaseEvidence(releaseProjectId!),
+    enabled: Boolean(releaseProjectId),
+    refetchInterval: 30_000,
+  });
   const runs = useQuery({ queryKey: ["runs"], queryFn: getRuns, refetchInterval: 1500 });
   const activeRun = runs.data?.find((run) => run.id === chosenRunId) ?? runs.data?.[0];
   const events = useQuery({
@@ -152,6 +161,11 @@ export function Dashboard() {
   });
   const busy = start.isPending || deploy.isPending || rollback.isPending;
   const agentUnavailable = Boolean(projects.error || runs.error);
+  const downloadReport = (runId: string, kind: "manual" | "deploy" | "db"): void => {
+    void openReport(runId, kind).catch((error: unknown) => {
+      void message.error(error instanceof Error ? error.message : "Rapor indirilemedi.");
+    });
+  };
 
   return <Layout className="shell">
     <Header className="topbar"><div className="topbar-inner"><div className="brand-lockup"><svg className="brand-symbol" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="header-mark-gradient" x1="8" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse"><stop stopColor="#4F86EE" /><stop offset="1" stopColor="#2855A7" /></linearGradient></defs><rect width="64" height="64" rx="17" fill="#102443" /><rect x="4" y="4" width="56" height="56" rx="15" fill="url(#header-mark-gradient)" /><path d="M10 32h13m28 0h5m0 0-4-4m4 4-4 4" fill="none" stroke="#DCE8FF" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" /><circle cx="12" cy="32" r="2.3" fill="#60D89B" /><rect x="23" y="20" width="28" height="24" rx="8" fill="#173A70" stroke="#F7FAFF" strokeWidth="2.5" /><path d="m30 32 5 5 9-10" fill="none" stroke="#70E0AC" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" /></svg><div className="brand-copy"><span className="brand-name">WitnessOps</span><span className="brand-caption">RELEASE VE KURTARMA KANITI</span></div></div><div className="topbar-meta"><div className={`agent-indicator ${agentUnavailable ? "is-offline" : ""}`} role="status" aria-live="polite"><span className={`connection-dot ${agentUnavailable ? "offline" : ""}`} aria-hidden="true" /><span className="agent-label">{agentUnavailable ? "Agent bağlantısı yok" : "Yerel agent bağlı"}</span></div><span className="environment-pill"><span>MAC</span><span className="environment-divider">·</span><span className="environment-local">YEREL</span></span></div></div></Header>
@@ -163,8 +177,9 @@ export function Dashboard() {
       {(coolify.error || coolify.data?.availability === "unavailable") && <Alert type="warning" showIcon className="notice" message="Coolify durumuna erişilemiyor" description={coolify.data?.error ?? "Bir sonraki yenilemede tekrar denenecek."} />}
       {coolify.data?.availability === "ready" && <div className="coolify-check"><span className="connection-dot" /><Text>Coolify okundu · {new Date(coolify.data.checkedAt).toLocaleTimeString("tr-TR")}</Text><Text type="secondary">Bu durum yeni sürümün dağıtıldığını kanıtlamaz.</Text></div>}
       {(start.error || deploy.error || rollback.error) && <Alert type="error" showIcon className="notice" message={(start.error ?? deploy.error ?? rollback.error)?.message} />}
-      <ReleaseEvidencePanel snapshot={releaseEvidence.data} project={projects.data?.find((project) => project.rollbackAvailable)} busy={busy} onRollback={(selectedProject, sha) => { setRollbackCandidate(selectedProject); setRollbackSha(sha); setRollbackConfirmation(""); }} />
-      {projects.data?.length === 0 && <Alert type="info" showIcon className="notice" message="İlk projeyi ekleyin" description="Yerel WitnessOps proje kataloğunu hazırlayın; örnek yapılandırma ve üç modülün alanları README içinde açıklanıyor." />}
+      {rollbackProjects.length > 1 && <Select aria-label="Release kanıtı projesi" value={releaseProjectId!} options={rollbackProjects.map((project) => ({ label: project.name, value: project.id }))} onChange={(value: string) => setSelectedReleaseProjectId(value)} />}
+      <ReleaseEvidencePanel snapshot={releaseEvidence.data} project={rollbackProjects.find((project) => project.id === releaseProjectId)} busy={busy} onRollback={(selectedProject, sha) => { setRollbackCandidate(selectedProject); setRollbackSha(sha); setRollbackConfirmation(""); }} />
+      {projects.data?.length === 0 && <Alert type="info" showIcon className="notice" message="İlk projeyi ekleyin" description="Terminalde witness setup çalıştırın; oluşan özel proje kataloğuna uygulamanızı örnek yapılandırmaya göre ekleyin." />}
       <section className="projects-section"><SectionHeading eyebrow="KAYNAK VE DAĞITIM" title="Projeler" detail={projects.data ? `${projects.data.length} proje` : "Proje durumları yükleniyor"} />
         {projects.isLoading ? <div className="loading-card"><Empty description="Proje durumları alınıyor…" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div> : projects.data?.length ? <div className="project-grid">{projects.data.map((project) => <ProjectCard key={project.id} project={project} applications={coolify.data?.applications.filter((application) => project.coolifyApplications.includes(application.uuid)) ?? []} artifact={artifacts.data?.find((artifact) => artifact.projectId === project.id)} busy={busy} onStart={(projectId, action) => start.mutate({ projectId, action })} onDeploy={(selectedProject, artifact) => { setDeployCandidate({ project: selectedProject, artifact }); setConfirmation(""); }} />)}</div> : !projects.error && <div className="loading-card"><Empty description="Yapılandırılmış proje bulunamadı" image={Empty.PRESENTED_IMAGE_SIMPLE} /></div>}
       </section>
@@ -189,9 +204,9 @@ export function Dashboard() {
         <section><SectionHeading eyebrow="İŞ KUYRUĞU" title="Son işler" detail={runs.data?.length ? `${runs.data.length} kayıt` : undefined} /><Card className="runs-card"><List dataSource={runs.data ?? []} locale={{ emptyText: <Empty description="Henüz iş yok" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }} renderItem={(run) => <List.Item className="run-list-item"><button type="button" className={`run-select ${run.id === activeRun?.id ? "selected-run" : ""}`} aria-pressed={run.id === activeRun?.id} onClick={() => setChosenRunId(run.id)}><span className="run-select-heading"><Text strong>{run.projectId}</Text><Tag color={statusColor(run.status)}>{statusLabel(run.status)}</Tag></span><span className="run-select-meta">{actionLabel(run.action)} <span>·</span> {new Date(run.createdAt).toLocaleString("tr-TR")}</span></button></List.Item>} /></Card></section>
         <section><SectionHeading eyebrow="CANLI İZLEME" title="İş ayrıntısı" detail={activeRun ? `Güncellendi · ${new Date(activeRun.updatedAt).toLocaleTimeString("tr-TR")}` : undefined} /><Card className="detail-card">{activeRun ? <><div className="detail-header"><div><Text className="meta-label">{activeRun.projectId} · {actionLabel(activeRun.action)}</Text><div className="detail-status"><Tag color={statusColor(activeRun.status)}>{statusLabel(activeRun.status)}</Tag><Text className="sha">{activeRun.sourceSha?.slice(0, 12) ?? "SHA bekleniyor"}</Text></div></div></div>
           {activeRun.error && <Alert type="error" showIcon className="notice" message={activeRun.error} />}
-          {events.data?.some((event) => event.message === "Evidence report is available.") && <Paragraph><a href={`/api/runs/${activeRun.id}/report`} target="_blank" rel="noreferrer">Kanıt raporunu aç</a></Paragraph>}
-          {events.data?.some((event) => event.message === "db evidence report is available.") && <Paragraph><a href={`/api/runs/${activeRun.id}/report?kind=db`} target="_blank" rel="noreferrer">Kurtarma raporunu aç</a></Paragraph>}
-          {events.data?.some((event) => event.message === "deploy evidence report is available.") && <Paragraph><a href={`/api/runs/${activeRun.id}/report?kind=deploy`} target="_blank" rel="noreferrer">Deploy doğrulama raporunu aç</a></Paragraph>}
+          {events.data?.some((event) => event.message === "Evidence report is available.") && <Paragraph><Button type="link" onClick={() => downloadReport(activeRun.id, "manual")}>Kanıt raporunu indir</Button></Paragraph>}
+          {events.data?.some((event) => event.message === "db evidence report is available.") && <Paragraph><Button type="link" onClick={() => downloadReport(activeRun.id, "db")}>Kurtarma raporunu indir</Button></Paragraph>}
+          {events.data?.some((event) => event.message === "deploy evidence report is available.") && <Paragraph><Button type="link" onClick={() => downloadReport(activeRun.id, "deploy")}>Deploy doğrulama raporunu indir</Button></Paragraph>}
           <div className="event-list">{events.data?.map((event) => <div key={event.sequence} className={`event event-${event.kind}`}><time>{new Date(event.at).toLocaleTimeString("tr-TR")}</time><span>{event.message}</span></div>)}{!events.data?.length && <Empty description={events.isLoading ? "Adımlar yükleniyor…" : "Adım kaydı bekleniyor"} image={Empty.PRESENTED_IMAGE_SIMPLE} />}</div>
         </> : <Empty description="Ayrıntılarını görmek için bir iş seçin" image={Empty.PRESENTED_IMAGE_SIMPLE} />}</Card></section>
       </div>

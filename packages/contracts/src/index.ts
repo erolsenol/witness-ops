@@ -33,6 +33,15 @@ export const projectSchema = z.strictObject({
   build: buildSchema.optional(),
   deploy: deploySchema.optional(),
   rollback: rollbackSchema.optional(),
+  releaseEvidence: z.strictObject({
+    sshTarget: z.string().min(1),
+    ledgerDirectory: z.string().startsWith("/"),
+    imagePrefix: z.string().min(1),
+    containers: z.array(z.strictObject({
+      logicalName: z.string().regex(/^[a-z][a-z0-9_-]*$/),
+      containerName: z.string().regex(/^[A-Za-z0-9_-]+$/),
+    })).min(1),
+  }).optional(),
   deployVerification: z.strictObject({
     configPath: z.string().startsWith("/"),
   }).optional(),

@@ -1,6 +1,6 @@
 {
   "name": "@erol.senol/witness-ops",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha.2",
   "description": "Local release control, deployment verification, and PostgreSQL recovery evidence",
   "private": false,
   "type": "module",
@@ -16,6 +16,7 @@
   "files": [
     ".node-version",
     "src/cli.mjs",
+    "src/setup.mjs",
     "apps/agent/dist",
     "apps/console/dist",
     "packages/deploy-witness/dist",

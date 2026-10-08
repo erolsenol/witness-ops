@@ -30,6 +30,23 @@ const runtime = (logicalName: "web" | "mobile", sha: string) => JSON.stringify({
 });
 
 describe("ReleaseEvidenceReader", () => {
+  it("accepts a project-specific single-container release layout", async () => {
+    const reader = new ReleaseEvidenceReader({
+      target: "root@host.example",
+      ledgerDirectory: "/var/lib/example",
+      imagePrefix: "local-release/example-",
+      containers: [{ logicalName: "api", containerName: "api-example" }],
+      runner: async (_target, command) => {
+        expect(command).toContain("name=^/api-example$");
+        return [
+          JSON.stringify({ kind: "current", sha: currentSha, state: "healthy", startedAt: "2026-10-08T00:00:00.000Z", finishedAt: null, images: [{ name: "api", reference: `local-release/example-api:sha-${currentSha}`, imageId }] }),
+          JSON.stringify({ kind: "runtime", logicalName: "api", reference: `local-release/example-api:sha-${currentSha}`, imageId, status: "running", health: "healthy" }),
+        ].join("\n");
+      },
+    });
+    expect((await reader.read()).runtimeMatchesCurrent).toBe(true);
+  });
+
   it("compares exact runtime image identities and lists only prior healthy releases", async () => {
     let calls = 0;
     const reader = new ReleaseEvidenceReader({ target: "root@host.example", ...evidenceOptions, runner: async (_target, command) => {

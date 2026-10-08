@@ -7,6 +7,7 @@ const packageInfo = Array.isArray(result) ? result[0] : result;
 const paths = new Set(packageInfo.files?.map((file) => file.path) ?? []);
 for (const required of [
   "src/cli.mjs",
+  "src/setup.mjs",
   "apps/agent/dist/index.js",
   "apps/agent/dist/cli.js",
   "apps/console/dist/index.html",

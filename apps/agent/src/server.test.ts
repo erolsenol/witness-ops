@@ -27,6 +27,17 @@ async function setup(projects: readonly Project[] = [], readReleaseEvidence?: ()
 }
 
 describe("local API boundary", () => {
+  it("requires the agent session token for operational API reads and writes", async () => {
+    const store = new RunStore(":memory:");
+    stores.push(store);
+    const server = await createServer({ projects: [], store, scheduler: new Scheduler([], store), authToken: "session-secret" });
+    servers.push(server);
+    expect((await server.inject({ method: "GET", url: "/api/health" })).statusCode).toBe(401);
+    expect((await server.inject({ method: "GET", url: "/api/health", headers: { "x-witness-token": "wrong" } })).statusCode).toBe(401);
+    expect((await server.inject({ method: "GET", url: "/api/health", headers: { "x-witness-token": "session-secret" } })).statusCode).toBe(200);
+    expect((await server.inject({ method: "POST", url: "/api/runs", headers: { "x-witness-request": "1" }, payload: { projectId: "missing", action: "plan" } })).statusCode).toBe(401);
+  });
+
   it("serves health and rejects a foreign browser origin", async () => {
     const server = await setup();
     const health = await server.inject({ method: "GET", url: "/api/health", headers: { host: "127.0.0.1:3847" } });

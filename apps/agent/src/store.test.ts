@@ -6,6 +6,25 @@ import Database from "better-sqlite3";
 import { RunStore } from "./store.ts";
 
 describe("RunStore", () => {
+  it("serializes operations across store connections", async () => {
+    const directory = mkdtempSync(join(tmpdir(), "witness-operation-lock-"));
+    const path = join(directory, "runs.sqlite");
+    const first = new RunStore(path);
+    const second = new RunStore(path);
+    try {
+      const release = first.acquireOperation("first");
+      expect(() => second.acquireOperation("second")).toThrow("Another WitnessOps operation is running");
+      const waiting = second.waitForOperation("second");
+      release();
+      const releaseSecond = await waiting;
+      releaseSecond();
+    } finally {
+      second.close();
+      first.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   it("records a run and ordered events", () => {
     const store = new RunStore(":memory:");
     try {
@@ -39,6 +58,9 @@ describe("RunStore", () => {
       first.createRun("running", "pawango", "plan");
       first.setStatus("running", "running");
       first.close();
+      const abandoned = new Database(path);
+      abandoned.prepare("UPDATE runs SET owner_pid = ?").run(999999);
+      abandoned.close();
       const second = new RunStore(path);
       try {
         expect(second.getRun("queued")?.status).toBe("needs_attention");
@@ -46,6 +68,23 @@ describe("RunStore", () => {
         expect(second.listEvents("running")[0]?.kind).toBe("error");
       } finally { second.close(); }
     } finally { rmSync(directory, { recursive: true, force: true }); }
+  });
+
+  it("preserves a live process's running job when another process opens the journal", () => {
+    const directory = mkdtempSync(join(tmpdir(), "witness-shared-journal-"));
+    const path = join(directory, "runs.sqlite");
+    const first = new RunStore(path);
+    try {
+      first.createRun("active", "guven", "deploy");
+      first.setStatus("active", "running");
+      const second = new RunStore(path);
+      try {
+        expect(second.getRun("active")?.status).toBe("running");
+      } finally { second.close(); }
+    } finally {
+      first.close();
+      rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   it.each(["'plan', 'check'", "'plan', 'check', 'build'", "'plan', 'check', 'build', 'deploy'"])("migrates an existing journal with actions %s", (actions) => {

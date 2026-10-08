@@ -31,9 +31,11 @@ jobs:
       - name: Build release assets
         run: |
           mkdir -p "$RUNNER_TEMP/witness-assets"
-          archive="$(find apps/desktop/out/make/zip -name 'WitnessOps-darwin-arm64-*.zip' -type f -print -quit)"
+          package_version="$(node -p 'require("./package.json").version')"
+          archive="$(find apps/desktop/out/make/zip -name "WitnessOps-darwin-arm64-$package_version.zip" -type f -print -quit)"
           test -n "$archive"
           unzip -tq "$archive"
+          unzip -Z1 "$archive" | grep -q 'WitnessOps.app/Contents/Resources/agent/bin/node$'
           cp "$archive" "$RUNNER_TEMP/witness-assets/"
           pnpm --ignore-scripts pack --pack-destination "$RUNNER_TEMP/witness-assets"
           cd "$RUNNER_TEMP/witness-assets"

@@ -1,10 +1,13 @@
 import Database from "better-sqlite3";
+import { setTimeout as delay } from "node:timers/promises";
 import type { BuildArtifactSummary, RunAction, RunEvent, RunRecord, RunStatus } from "@deploy-relay/contracts";
 
 export interface BuildArtifact extends BuildArtifactSummary {
   readonly manifest: string;
   readonly runId: string;
 }
+
+export class OperationBusyError extends Error {}
 
 interface RunRow {
   id: string;
@@ -57,6 +60,7 @@ export class RunStore {
     this.#db = new Database(path);
     this.#db.pragma("journal_mode = WAL");
     this.#db.pragma("foreign_keys = ON");
+    this.#db.pragma("busy_timeout = 5000");
     this.#db.exec(`
       CREATE TABLE IF NOT EXISTS runs (
         id TEXT PRIMARY KEY,
@@ -67,7 +71,8 @@ export class RunStore {
         branch TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        error TEXT
+        error TEXT,
+        owner_pid INTEGER
       );
       CREATE TABLE IF NOT EXISTS events (
         sequence INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,6 +83,10 @@ export class RunStore {
       );
       CREATE INDEX IF NOT EXISTS events_run_sequence ON events(run_id, sequence);
     `);
+    const columns = this.#db.pragma("table_info(runs)") as { name: string }[];
+    if (!columns.some((column) => column.name === "owner_pid")) {
+      this.#db.exec("ALTER TABLE runs ADD COLUMN owner_pid INTEGER");
+    }
     this.migrateActions();
     this.#db.exec(`
       CREATE TABLE IF NOT EXISTS build_artifacts (
@@ -88,13 +97,65 @@ export class RunStore {
         run_id TEXT NOT NULL REFERENCES runs(id),
         created_at TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS operation_lock (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        run_id TEXT NOT NULL,
+        owner_pid INTEGER NOT NULL,
+        acquired_at TEXT NOT NULL
+      );
     `);
-    const interrupted = this.#db.prepare("SELECT id FROM runs WHERE status IN ('running', 'queued')").all() as { id: string }[];
-    this.#db.prepare("UPDATE runs SET status = 'needs_attention', updated_at = ? WHERE status IN ('running', 'queued')").run(new Date().toISOString());
-    for (const row of interrupted) this.appendEvent(row.id, "error", "Agent yeniden başladı; tekrar denemeden önce bu işi inceleyin.");
+    const pending = this.#db.prepare("SELECT id, owner_pid FROM runs WHERE status IN ('running', 'queued')")
+      .all() as { id: string; owner_pid: number | null }[];
+    for (const row of pending) {
+      if (row.owner_pid !== null && this.processIsAlive(row.owner_pid)) continue;
+      this.#db.prepare("UPDATE runs SET status = 'needs_attention', updated_at = ? WHERE id = ?")
+        .run(new Date().toISOString(), row.id);
+      this.appendEvent(row.id, "error", "İşi başlatan süreç artık çalışmıyor; tekrar denemeden önce sonucu inceleyin.");
+    }
   }
 
   close(): void { this.#db.close(); }
+
+  private processIsAlive(pid: number): boolean {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch (error: unknown) {
+      if (error instanceof Error && "code" in error && error.code === "ESRCH") return false;
+      return true;
+    }
+  }
+
+  acquireOperation(runId: string): () => void {
+    this.#db.transaction(() => {
+      const owner = this.#db.prepare("SELECT run_id, owner_pid FROM operation_lock WHERE id = 1")
+        .get() as { run_id: string; owner_pid: number } | undefined;
+      if (owner) {
+        if (this.processIsAlive(owner.owner_pid)) {
+          throw new OperationBusyError(`Another WitnessOps operation is running (${owner.run_id}).`);
+        }
+        this.#db.prepare("DELETE FROM operation_lock WHERE id = 1").run();
+      }
+      this.#db.prepare("INSERT INTO operation_lock (id, run_id, owner_pid, acquired_at) VALUES (1, ?, ?, ?)")
+        .run(runId, process.pid, new Date().toISOString());
+    })();
+    return () => {
+      this.#db.prepare("DELETE FROM operation_lock WHERE id = 1 AND run_id = ? AND owner_pid = ?")
+        .run(runId, process.pid);
+    };
+  }
+
+  async waitForOperation(runId: string): Promise<() => void> {
+    const deadline = Date.now() + 4 * 60 * 60 * 1000;
+    while (true) {
+      try {
+        return this.acquireOperation(runId);
+      } catch (error: unknown) {
+        if (!(error instanceof OperationBusyError) || Date.now() >= deadline) throw error;
+        await delay(250);
+      }
+    }
+  }
 
   private migrateActions(): void {
     const table = this.#db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'runs'").get() as { sql: string } | undefined;
@@ -112,7 +173,8 @@ export class RunStore {
             branch TEXT,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
-            error TEXT
+            error TEXT,
+            owner_pid INTEGER
           );
           INSERT INTO runs_new SELECT * FROM runs;
           DROP TABLE runs;
@@ -128,8 +190,8 @@ export class RunStore {
 
   createRun(id: string, projectId: string, action: RunAction): RunRecord {
     const now = new Date().toISOString();
-    this.#db.prepare("INSERT INTO runs (id, project_id, action, status, created_at, updated_at) VALUES (?, ?, ?, 'queued', ?, ?)")
-      .run(id, projectId, action, now, now);
+    this.#db.prepare("INSERT INTO runs (id, project_id, action, status, created_at, updated_at, owner_pid) VALUES (?, ?, ?, 'queued', ?, ?, ?)")
+      .run(id, projectId, action, now, now, process.pid);
     return this.getRun(id)!;
   }
 

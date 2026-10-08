@@ -17,6 +17,7 @@ Usage:
   witness release <plan|check|build|deploy|rollback> [options]
   witness deploy <verify|report|config|init|schema> [options]
   witness db <backup|verify|drill|restore|monitor|status|list|...> [options]
+  witness setup
   witness app
 `);
 } else {
@@ -24,13 +25,14 @@ Usage:
     release: join(root, "apps", "agent", "dist", "cli.js"),
     deploy: join(root, "packages", "deploy-witness", "dist", "cli.js"),
     db: join(root, "packages", "restore-witness", "dist", "cli.js"),
+    setup: join(root, "src", "setup.mjs"),
     app: join(root, "apps", "agent", "dist", "index.js"),
   };
   const target = targets[group];
-  if (!target || (group === "app" && args.length > 0)) {
+  if (!target || ((group === "app" || group === "setup") && args.length > 0)) {
     process.stderr.write("Unknown command. Run witness --help.\n");
     process.exitCode = 2;
-  } else if ((group === "release" || group === "app") && process.platform !== "darwin") {
+  } else if ((group === "release" || group === "app" || group === "setup") && process.platform !== "darwin") {
     process.stderr.write("Release control and the local app require macOS.\n");
     process.exitCode = 2;
   } else {

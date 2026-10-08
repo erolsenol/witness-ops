@@ -27,6 +27,7 @@ jobs:
       - run: pnpm check
         env:
           RW_AGE_BIN_DIRECTORY: /usr/bin
+      - run: node scripts/agent-smoke.mjs
       - name: Check committed Action bundle
         run: git diff --exit-code -- dist/action-bundle/index.js
       - name: Check npm package contents
@@ -50,6 +51,43 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Start disposable provider and runtime fixture
+        id: fixture
+        run: |
+          node scripts/action-consumer-fixture.mjs "$RUNNER_TEMP" "$GITHUB_SHA" &
+          echo "$!" > "$RUNNER_TEMP/action-fixture.pid"
+          for attempt in {1..30}; do
+            if [ -f "$RUNNER_TEMP/action-consumer.json" ]; then
+              echo "config=$RUNNER_TEMP/action-consumer.json" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - name: Verify deployed commit from clean Action consumer
+        id: positive
+        uses: ./
+        with:
+          config: ${{ steps.fixture.outputs.config }}
+          expected-sha: ${{ github.sha }}
+          coolify-token: fixture-token
+      - name: Confirm positive decision
+        env:
+          ACTION_DECISION: ${{ steps.positive.outputs.decision }}
+        run: test "$ACTION_DECISION" = PASS
+      - name: Reject a wrong commit from clean Action consumer
+        id: wrong-sha
+        continue-on-error: true
+        uses: ./
+        with:
+          config: ${{ steps.fixture.outputs.config }}
+          expected-sha: 0123456789abcdef0123456789abcdef01234567
+          coolify-token: fixture-token
+          report-path: wrong-sha-report.json
+      - name: Confirm wrong commit failed
+        env:
+          ACTION_OUTCOME: ${{ steps.wrong-sha.outcome }}
+        run: test "$ACTION_OUTCOME" = failure
       - name: Run Action from clean checkout without installing dependencies
         id: witness
         continue-on-error: true
@@ -61,6 +99,12 @@ jobs:
         env:
           ACTION_OUTCOME: ${{ steps.witness.outcome }}
         run: test "$ACTION_OUTCOME" = failure
+      - name: Stop disposable fixture
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/action-fixture.pid" ]; then
+            kill "$(cat "$RUNNER_TEMP/action-fixture.pid")" || true
+          fi
 
   recovery-integration:
     runs-on: ubuntu-24.04
@@ -128,6 +172,8 @@ jobs:
       - run: pnpm make:desktop
       - name: Verify archive
         run: |
-          archive="$(find apps/desktop/out/make/zip -name 'WitnessOps-darwin-arm64-*.zip' -type f -print -quit)"
+          package_version="$(node -p 'require("./package.json").version')"
+          archive="$(find apps/desktop/out/make/zip -name "WitnessOps-darwin-arm64-$package_version.zip" -type f -print -quit)"
           test -n "$archive"
           unzip -tq "$archive"
+          unzip -Z1 "$archive" | grep -q 'WitnessOps.app/Contents/Resources/agent/bin/node$'

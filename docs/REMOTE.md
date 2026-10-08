@@ -16,4 +16,4 @@ ssh -N -T -o BatchMode=yes -o ExitOnForwardFailure=yes \
   operator@example-host.invalid
 ```
 
-Open `http://127.0.0.1:3848` on the viewing Mac. Both SSH sessions must remain active. Anyone with access to the SSH host's loopback port can potentially reach the forwarded agent; use trusted accounts and strict host-key checking. Do not expose the remote port publicly.
+Open the operator's `witness app` session URL on the viewing Mac, replacing its `127.0.0.1:3847` address with `127.0.0.1:3848` while retaining the `#token=...` fragment. Both SSH sessions must remain active. Anyone who obtains that token and access to the SSH host's loopback port can reach the agent; use trusted accounts and strict host-key checking. Do not expose the remote port publicly.

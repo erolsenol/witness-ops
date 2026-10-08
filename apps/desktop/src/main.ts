@@ -1,10 +1,13 @@
 import { spawn, type ChildProcess } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync } from "node:fs";
+import { createServer } from "node:net";
 import { homedir } from "node:os";
 import { delimiter, join, resolve } from "node:path";
 import { app, BrowserWindow, dialog } from "electron";
 
-const agentOrigin = "http://127.0.0.1:3847";
+const agentToken = randomBytes(32).toString("hex");
+let agentOrigin = "";
 let ownedAgent: ChildProcess | null = null;
 
 const electronDataDirectory = join(homedir(), "Library", "Application Support", "WitnessOps", "electron");
@@ -14,7 +17,10 @@ app.setPath("userData", electronDataDirectory);
 
 async function agentReady(): Promise<boolean> {
   try {
-    const response = await fetch(`${agentOrigin}/api/health`, { signal: AbortSignal.timeout(1500) });
+    const response = await fetch(`${agentOrigin}/api/health`, {
+      headers: { "X-Witness-Token": agentToken },
+      signal: AbortSignal.timeout(1500),
+    });
     const data: unknown = await response.json();
     return response.ok && typeof data === "object" && data !== null && "service" in data && data.service === "witness-ops-agent";
   } catch {
@@ -22,19 +28,38 @@ async function agentReady(): Promise<boolean> {
   }
 }
 
+async function availablePort(): Promise<number> {
+  return new Promise((resolvePort, reject) => {
+    const probe = createServer();
+    probe.once("error", reject);
+    probe.listen(0, "127.0.0.1", () => {
+      const address = probe.address();
+      if (!address || typeof address === "string") {
+        probe.close();
+        reject(new Error("Could not allocate a local agent port."));
+        return;
+      }
+      probe.close(() => resolvePort(address.port));
+    });
+  });
+}
+
 async function ensureAgent(): Promise<boolean> {
-  if (await agentReady()) return true;
+  agentOrigin = `http://127.0.0.1:${await availablePort()}`;
   const root = app.isPackaged ? join(process.resourcesPath, "agent") : resolve(app.getAppPath(), "../..");
   const entry = join(root, "apps", "agent", "dist", "index.js");
   if (!existsSync(entry)) return false;
   const localBin = join(homedir(), ".local", "bin");
-  const node = process.env.WITNESS_NODE ?? (existsSync(join(localBin, "node")) ? join(localBin, "node") : "node");
+  const bundledNode = join(root, "bin", "node");
+  const node = process.env.WITNESS_NODE ?? (existsSync(bundledNode) ? bundledNode : existsSync(join(localBin, "node")) ? join(localBin, "node") : "node");
   ownedAgent = spawn(node, [entry], {
     cwd: root,
     stdio: "ignore",
     env: {
       ...process.env,
       WITNESS_ROOT: root,
+      WITNESS_PORT: new URL(agentOrigin).port,
+      WITNESS_AUTH_TOKEN: agentToken,
       PATH: `${localBin}${delimiter}${process.env.PATH ?? "/usr/bin:/bin"}`,
     },
   });
@@ -49,7 +74,7 @@ async function ensureAgent(): Promise<boolean> {
 
 async function createWindow(): Promise<void> {
   if (!await ensureAgent()) {
-    dialog.showErrorBox("WitnessOps agent başlatılamadı", "Node 24 kurulumunu ve yerel proje yapılandırmasını kontrol edin.");
+    dialog.showErrorBox("WitnessOps agent başlatılamadı", "Yerel proje yapılandırmasını ve uygulama paketini kontrol edin.");
     app.quit();
     return;
   }
@@ -71,7 +96,7 @@ async function createWindow(): Promise<void> {
   window.webContents.on("will-navigate", (event, url) => {
     if (!url.startsWith(`${agentOrigin}/`)) event.preventDefault();
   });
-  await window.loadURL(agentOrigin);
+  await window.loadURL(`${agentOrigin}/#token=${agentToken}`);
   window.show();
 }
 

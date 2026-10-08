@@ -15,7 +15,8 @@ export interface ServerDependencies {
   readonly scheduler: Scheduler;
   readonly consoleDirectory?: string;
   readonly readCoolify?: () => Promise<CoolifySnapshot>;
-  readonly readReleaseEvidence?: () => Promise<ReleaseEvidenceSnapshot>;
+  readonly readReleaseEvidence?: (projectId?: string) => Promise<ReleaseEvidenceSnapshot>;
+  readonly authToken?: string;
 }
 
 function isToolAction(action: RunAction): action is ToolAction {
@@ -34,6 +35,9 @@ export async function createServer(dependencies: ServerDependencies): Promise<Fa
     if (origin && !/^http:\/\/(127\.0\.0\.1|localhost)(:\d{1,5})?$/.test(origin)) {
       return reply.code(403).send({ error: "Local origin required." });
     }
+    if (request.url.startsWith("/api/") && dependencies.authToken && request.headers["x-witness-token"] !== dependencies.authToken) {
+      return reply.code(401).send({ error: "Agent session token required." });
+    }
     if (request.method !== "GET" && request.url.startsWith("/api/") && request.headers["x-witness-request"] !== "1") {
       return reply.code(403).send({ error: "Request header required." });
     }
@@ -44,10 +48,16 @@ export async function createServer(dependencies: ServerDependencies): Promise<Fa
   server.get("/api/coolify", async () => dependencies.readCoolify?.() ?? {
     availability: "not_configured", checkedAt: new Date().toISOString(), applications: [], error: null,
   });
-  server.get("/api/release-evidence", async () => dependencies.readReleaseEvidence?.() ?? {
-    availability: "unavailable", checkedAt: new Date().toISOString(), current: null,
-    rollbackCandidates: [], runtimeImages: [], runtimeMatchesCurrent: null,
-    error: "Release ledger reader is not configured.",
+  server.get<{ Querystring: { projectId?: string } }>("/api/release-evidence", async (request, reply) => {
+    const projectId = request.query.projectId;
+    if (projectId && !dependencies.projects.some((project) => project.id === projectId)) {
+      return reply.code(404).send({ error: "Unknown project." });
+    }
+    return dependencies.readReleaseEvidence?.(projectId) ?? {
+      availability: "unavailable", checkedAt: new Date().toISOString(), current: null,
+      rollbackCandidates: [], runtimeImages: [], runtimeMatchesCurrent: null,
+      error: "Release ledger reader is not configured.",
+    };
   });
   server.get("/api/runs", async () => dependencies.store.listRuns());
   server.get("/api/artifacts", async () => dependencies.store.listBuildArtifactSummaries());
@@ -76,7 +86,7 @@ export async function createServer(dependencies: ServerDependencies): Promise<Fa
       const project = dependencies.projects.find((item) => item.id === parsed.data.projectId);
       if (!project) return reply.code(404).send({ error: "Unknown project." });
       if (!project.rollback) return reply.code(409).send({ error: "Rollback is not configured for this project." });
-      const evidence = await dependencies.readReleaseEvidence?.();
+      const evidence = await dependencies.readReleaseEvidence?.(project.id);
       if (!evidence || !isVerifiedRollbackCandidate(evidence, parsed.data.expectedSha)) {
         return reply.code(409).send({ error: "Rollback requires a listed healthy candidate and matching current runtime images." });
       }

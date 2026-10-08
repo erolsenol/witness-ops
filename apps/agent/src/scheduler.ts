@@ -47,8 +47,10 @@ export class Scheduler {
   async idle(): Promise<void> { await this.#tail; }
 
   private async executeTool(id: string, project: Project, action: ToolAction): Promise<void> {
-    this.store.setStatus(id, "running");
+    let releaseOperation: (() => void) | undefined;
     try {
+      releaseOperation = await this.store.waitForOperation(id);
+      this.store.setStatus(id, "running");
       const source = inspectProject(project);
       if (action === "deploy-verify") {
         if (source.error || !source.sha || !source.clean) throw new Error("A clean source commit is required.");
@@ -63,15 +65,19 @@ export class Scheduler {
       const message = error instanceof Error ? error.message : "Verification failed.";
       this.store.setStatus(id, "failed", { error: message });
       this.store.appendEvent(id, "error", message);
+    } finally {
+      releaseOperation?.();
     }
     if (existsSync(reportPath(id))) this.store.appendEvent(id, "result", "Evidence report is available.");
   }
 
   private async execute(id: string, project: Project, action: ReleaseAction, expected?: { readonly sha: string; readonly manifestHash?: string }): Promise<void> {
-    this.store.setStatus(id, "running");
+    let releaseOperation: (() => void) | undefined;
     let deploymentStarted = false;
     let deploymentStartedAt: string | undefined;
     try {
+      releaseOperation = await this.store.waitForOperation(id);
+      this.store.setStatus(id, "running");
       const initial = inspectProject(project);
       if (initial.error || !initial.sha) throw new Error(initial.error ?? "Source SHA unavailable.");
       this.store.setStatus(id, "running", {
@@ -137,6 +143,8 @@ export class Scheduler {
       const message = error instanceof Error ? error.message : "Unknown failure";
       this.store.setStatus(id, deploymentStarted ? "needs_attention" : "failed", { error: message });
       this.store.appendEvent(id, "error", message);
+    } finally {
+      releaseOperation?.();
     }
     for (const kind of ["db", "deploy"] as const) {
       if (existsSync(reportPath(id, kind))) this.store.appendEvent(id, "result", `${kind} evidence report is available.`);

@@ -59,6 +59,7 @@ describe("published CI consumer examples", () => {
     const workflow = parse(
       await readFile("../../.github/workflows/publish-npm.yml", "utf8"),
     ) as {
+      readonly permissions: { readonly "id-token": string };
       readonly jobs: {
         readonly publish: {
           readonly steps: readonly {
@@ -71,26 +72,14 @@ describe("published CI consumer examples", () => {
     };
     const steps = workflow.jobs.publish.steps;
 
-    const accountCheckIndex = steps.findIndex(
-      (step) => step.name === "Verify npm publisher account",
-    );
     const publishIndex = steps.findIndex(
-      (step) => step.name === "Publish as erol.senol with provenance",
+      (step) => step.name === "Publish using npm Trusted Publishing",
     );
-    expect(accountCheckIndex).toBeGreaterThanOrEqual(0);
-    expect(publishIndex).toBeGreaterThan(accountCheckIndex);
+    expect(workflow.permissions["id-token"]).toBe("write");
+    expect(publishIndex).toBeGreaterThanOrEqual(0);
     expect(steps[publishIndex]?.run).toContain("--provenance");
-    const accountCheck = steps[accountCheckIndex];
-    expect(accountCheck?.run).toContain('if [ -z "$NODE_AUTH_TOKEN" ]');
-    expect(accountCheck?.run).toContain(
-      'test "$(npm whoami --registry=https://registry.npmjs.org)" = "erol.senol"',
-    );
-    for (const index of [accountCheckIndex, publishIndex]) {
-      expect(steps[index]?.env?.NODE_AUTH_TOKEN).toBe(
-        // biome-ignore lint/suspicious/noTemplateCurlyInString: GitHub Actions expression syntax.
-        "${{ secrets.NPM_TOKEN }}",
-      );
-    }
+    expect(steps[publishIndex]?.run).toContain("npm publish");
+    expect(steps[publishIndex]?.env?.NODE_AUTH_TOKEN).toBeUndefined();
 
     expect(steps.map((step) => step.name)).toContain(
       "Wait for registry visibility and verify source package",

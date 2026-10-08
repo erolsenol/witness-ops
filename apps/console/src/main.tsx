@@ -7,6 +7,11 @@ import "./styles.css";
 
 const root = document.getElementById("root");
 if (!root) throw new Error("Application root missing.");
+const sessionToken = new URLSearchParams(window.location.hash.slice(1)).get("token");
+if (sessionToken && /^[a-f0-9]{64}$/.test(sessionToken)) {
+  window.sessionStorage.setItem("witness-agent-token", sessionToken);
+  window.history.replaceState(null, "", window.location.pathname + window.location.search);
+}
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1 } } });
 createRoot(root).render(

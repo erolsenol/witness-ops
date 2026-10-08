@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { cpSync, rmSync } from "node:fs";
+import { cpSync, mkdirSync, rmSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,9 +30,12 @@ run(["build"]);
 rmSync(stagedAgent, { recursive: true, force: true });
 run(["--filter", "@erol.senol/witness-ops", "deploy", "--prod", stagedAgent]);
 cpSync(join(root, ".node-version"), join(stagedAgent, ".node-version"));
+mkdirSync(join(stagedAgent, "bin"), { recursive: true });
+cpSync(process.execPath, join(stagedAgent, "bin", "node"));
 runIconBuild();
 rmSync(stagedDesktop, { recursive: true, force: true });
 run(["--filter", "@deploy-relay/desktop", "deploy", "--node-linker", "hoisted", stagedDesktop]);
+rmSync(join(stagedDesktop, "out"), { recursive: true, force: true });
 cpSync(stagedAgent, join(stagedDesktop, "build", "agent"), { recursive: true, force: true });
 const forge = spawnSync(process.execPath, [
   "node_modules/@electron-forge/cli/dist/electron-forge.js",

@@ -24,7 +24,7 @@ pnpm check
 node src/cli.mjs --help
 ```
 
-The Electron ZIP is a separate asset on the matching GitHub Release. Its bundled agent still needs a Node 24 installation on the Mac.
+The Electron ZIP is a separate asset on the matching GitHub Release. It bundles the Node 24 runtime used by its local agent.
 
 ## CLI
 
@@ -36,6 +36,7 @@ witness release deploy --project example --sha <verified-build-sha> --manifest-h
 witness deploy verify --config /private/deploy-witness.yml --expected-sha <40-character-sha>
 witness db doctor example --config /private/restore-witness.json
 witness db drill example --config /private/restore-witness.json
+witness setup
 witness app
 ```
 
@@ -45,9 +46,9 @@ For complete provider and database configuration details, see [deploy verificati
 
 ## Local console
 
-On macOS, run `witness app` and open [http://127.0.0.1:3847](http://127.0.0.1:3847), or use the Electron app. Release, Deploy verification, and Database recovery share one job list. Reports are available through the local agent after a run; treat them as private operational data.
+On macOS, run `witness app` and open the session URL printed in its terminal, or use the Electron app. The URL fragment supplies a random session token to the browser; keep it private. Electron starts its own agent on an available loopback port. Release, Deploy verification, and Database recovery share one job list. Reports are available through the local agent after a run; treat them as private operational data.
 
-Copy [the project catalog example](config/projects.example.json) to `~/Library/Application Support/WitnessOps/projects.json`, then replace its sample project with your own checkout and native check commands. Set `WITNESS_CONFIG` to use another absolute path. The catalog may be empty; the app then opens with setup guidance and no runnable projects. Do not commit your real catalog or credentials.
+Run `witness setup` to create a private empty catalog at `~/Library/Application Support/WitnessOps/projects.json`, then add projects using [the project catalog example](config/projects.example.json) and their native check commands. The setup command never overwrites an existing catalog. Set `WITNESS_CONFIG` to use another absolute path. The catalog may be empty; the app then opens with setup guidance and no runnable projects. Do not commit your real catalog or credentials.
 
 For a project's Deploy verification card, add:
 
@@ -67,7 +68,22 @@ For its Database recovery card, add:
 
 Set `beforeDeploy` to `true` only when a passing RestoreWitness drill should block that project's deploy. If `deployVerification` is configured, DeployWitness runs after the native receiver and smoke check. A failed post-deploy verification leaves the run at `needs_attention`; it never automatically retries or rolls back. Capture provider tokens through the agent process environment. `COOLIFY_API_BASE_URL` is required for optional Coolify status reading.
 
+For project-specific release ledger and rollback evidence, add a `releaseEvidence` section to that project. The logical names must match the image names in its receiver ledger:
+
+```json
+"releaseEvidence": {
+  "sshTarget": "operator@trusted-host.example",
+  "ledgerDirectory": "/var/lib/your-app/releases",
+  "imagePrefix": "local-release/your-app-",
+  "containers": [{ "logicalName": "api", "containerName": "your-app-api" }]
+}
+```
+
+Existing single-project `WITNESS_RELEASE_*` environment settings still work. Configure `releaseEvidence` per project when managing multiple applications. Release jobs in separate CLI and app processes use the same SQLite operation lock and wait their turn before starting.
+
 The agent stores its SQLite journal and evidence reports under `~/Library/Application Support/WitnessOps` by default. Set `WITNESS_DATA_DIR` to override it. The old DeployRelay data directory is left in place; move data only after inspecting it. The original repositories and npm package versions remain available as archived migration references.
+
+The session token protects the operational API, including evidence downloads. A local process running as the same user can still inspect its own agent environment and files; use a trusted operator account. A browser opened without the printed session URL shows an unavailable agent.
 
 ## GitHub Action
 
