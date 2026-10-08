@@ -50,7 +50,7 @@ describe("RunStore", () => {
   });
 
   it("marks unfinished jobs for review after a restart", () => {
-    const directory = mkdtempSync(join(tmpdir(), "deploy-relay-store-"));
+    const directory = mkdtempSync(join(tmpdir(), "witness-ops-store-"));
     const path = join(directory, "runs.sqlite");
     try {
       const first = new RunStore(path);
@@ -88,7 +88,7 @@ describe("RunStore", () => {
   });
 
   it.each(["'plan', 'check'", "'plan', 'check', 'build'", "'plan', 'check', 'build', 'deploy'"])("migrates an existing journal with actions %s", (actions) => {
-    const directory = mkdtempSync(join(tmpdir(), "deploy-relay-migration-"));
+    const directory = mkdtempSync(join(tmpdir(), "witness-ops-migration-"));
     const path = join(directory, "runs.sqlite");
     try {
       const old = new Database(path);

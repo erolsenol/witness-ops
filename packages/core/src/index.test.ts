@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import type { Project, ProjectState } from "@deploy-relay/contracts";
+import type { Project, ProjectState } from "@witness-ops/contracts";
 import { buildProject, checkProject, deployProject, rollbackProject, safeStepDiagnostic } from "./index.ts";
 
 const project: Project = {
@@ -155,7 +155,7 @@ describe("buildProject", () => {
   });
 
   it("verifies the native manifest and records its digest", async () => {
-    const root = mkdtempSync(join(tmpdir(), "deploy-relay-build-"));
+    const root = mkdtempSync(join(tmpdir(), "witness-ops-build-"));
     const manifest = join(root, ".release-artifacts", cleanState.sha!, "manifest.json");
     const calls: string[] = [];
     try {
@@ -191,7 +191,7 @@ describe("buildProject", () => {
   });
 
   it("verifies, deploys, and smokes only the recorded manifest", async () => {
-    const root = mkdtempSync(join(tmpdir(), "deploy-relay-deploy-"));
+    const root = mkdtempSync(join(tmpdir(), "witness-ops-deploy-"));
     const manifest = join(root, ".release-artifacts", cleanState.sha!, "manifest.json");
     const calls: string[] = [];
     let deploymentStarted = false;

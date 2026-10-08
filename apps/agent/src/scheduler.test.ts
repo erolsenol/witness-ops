@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import type { Project, ReleaseEvidenceSnapshot } from "@deploy-relay/contracts";
+import type { Project, ReleaseEvidenceSnapshot } from "@witness-ops/contracts";
 import { Scheduler } from "./scheduler.ts";
 import { RunStore } from "./store.ts";
 
@@ -107,7 +107,7 @@ describe("Scheduler deploy reconciliation", () => {
     }
   });
   it("marks a failed native deploy for review instead of retrying it", async () => {
-    const root = mkdtempSync(join(tmpdir(), "deploy-relay-scheduler-"));
+    const root = mkdtempSync(join(tmpdir(), "witness-ops-scheduler-"));
     const store = new RunStore(":memory:");
     try {
       git(root, ["init", "-q", "-b", "main"]);
@@ -142,7 +142,7 @@ describe("Scheduler deploy reconciliation", () => {
   });
 
   it("marks an uncertain rollback for review and never retries it", async () => {
-    const root = mkdtempSync(join(tmpdir(), "deploy-relay-rollback-scheduler-"));
+    const root = mkdtempSync(join(tmpdir(), "witness-ops-rollback-scheduler-"));
     const store = new RunStore(":memory:");
     let rollbackCalls = 0;
     try {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Project } from "@deploy-relay/contracts";
+import type { Project } from "@witness-ops/contracts";
 import { parseCliArgs } from "./cli-args.ts";
 
 const projects: Project[] = [

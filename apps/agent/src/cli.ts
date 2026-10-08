@@ -1,6 +1,6 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { inspectProject } from "@deploy-relay/core";
+import { inspectProject } from "@witness-ops/core";
 import { parseCliArgs } from "./cli-args.ts";
 import { Scheduler } from "./scheduler.ts";
 import { RunStore } from "./store.ts";

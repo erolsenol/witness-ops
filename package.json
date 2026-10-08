@@ -1,6 +1,6 @@
 {
   "name": "@erol.senol/witness-ops",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "description": "Local release control, deployment verification, and PostgreSQL recovery evidence",
   "private": false,
   "type": "module",
@@ -30,10 +30,13 @@
     "SECURITY.md"
   ],
   "scripts": {
-    "dev:agent": "pnpm --filter @deploy-relay/agent dev",
-    "dev:console": "pnpm --filter @deploy-relay/console dev",
-    "dev:desktop": "pnpm --filter @deploy-relay/desktop dev",
-    "build": "node scripts/clean-build.mjs && pnpm --filter deploy-witness build && pnpm --filter @erol.senol/restore-witness build && pnpm --filter @deploy-relay/console build && pnpm --filter @deploy-relay/agent build && pnpm --filter @deploy-relay/desktop build && node scripts/copy-action-bundle.mjs",
+    "dev:agent": "pnpm --filter @witness-ops/agent dev",
+    "dev:console": "pnpm --filter @witness-ops/console dev",
+    "dev:desktop": "pnpm --filter @witness-ops/desktop dev",
+    "preflight": "node scripts/doctor.mjs",
+    "release:github": "node scripts/release-github.mjs",
+    "release:github:dry-run": "node scripts/release-github.mjs -- --notes docs/RELEASE.md --dry-run",
+    "build": "node scripts/clean-build.mjs && pnpm --filter deploy-witness build && pnpm --filter @erol.senol/restore-witness build && pnpm --filter @witness-ops/console build && pnpm --filter @witness-ops/agent build && pnpm --filter @witness-ops/desktop build && node scripts/copy-action-bundle.mjs",
     "typecheck": "pnpm -r --workspace-concurrency=1 --if-present typecheck",
     "test": "vitest run && pnpm --filter deploy-witness test && pnpm --filter @erol.senol/restore-witness test",
     "check": "pnpm typecheck && pnpm test && pnpm build",

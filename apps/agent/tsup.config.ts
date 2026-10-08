@@ -6,5 +6,5 @@ export default defineConfig({
   target: "node24",
   outDir: "dist",
   external: ["better-sqlite3"],
-  noExternal: ["@deploy-relay/contracts", "@deploy-relay/core"],
+  noExternal: ["@witness-ops/contracts", "@witness-ops/core"],
 });

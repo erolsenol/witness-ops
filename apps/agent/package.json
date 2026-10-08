@@ -1,6 +1,6 @@
 {
-  "name": "@deploy-relay/agent",
-  "version": "0.1.0-alpha.4",
+  "name": "@witness-ops/agent",
+  "version": "0.1.0-alpha.5",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,8 +10,8 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@deploy-relay/contracts": "workspace:*",
-    "@deploy-relay/core": "workspace:*",
+    "@witness-ops/contracts": "workspace:*",
+    "@witness-ops/core": "workspace:*",
     "@fastify/static": "10.1.5",
     "better-sqlite3": "13.0.3",
     "fastify": "5.12.5"

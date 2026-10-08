@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Project } from "@deploy-relay/contracts";
+import type { Project } from "@witness-ops/contracts";
 import { dataDirectory } from "./config.ts";
 
 const root = process.env.WITNESS_ROOT ?? resolve(dirname(fileURLToPath(import.meta.url)), "../../..");

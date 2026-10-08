@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve, sep } from "node:path";
-import type { Project, ProjectState } from "@deploy-relay/contracts";
+import type { Project, ProjectState } from "@witness-ops/contracts";
 
 const devRun = process.env.WITNESS_DEV_RUN ?? join(homedir(), ".local", "bin", "dev-run");
 

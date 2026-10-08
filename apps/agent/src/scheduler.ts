@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
-import type { Project, ReleaseAction, ReleaseEvidenceSnapshot, RunRecord, ToolAction } from "@deploy-relay/contracts";
-import { buildProject, checkProject, deployProject, executeLockedStep, inspectProject, projectNodeVersion, rollbackProject } from "@deploy-relay/core";
+import type { Project, ReleaseAction, ReleaseEvidenceSnapshot, RunRecord, ToolAction } from "@witness-ops/contracts";
+import { buildProject, checkProject, deployProject, executeLockedStep, inspectProject, projectNodeVersion, rollbackProject } from "@witness-ops/core";
 import { isVerifiedRollbackCandidate, ReleaseEvidenceReader } from "./release-evidence.ts";
 import { RunStore } from "./store.ts";
 import { reportPath, runDatabaseCheck, runDeployVerification } from "./tool-runner.ts";

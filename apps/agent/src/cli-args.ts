@@ -1,4 +1,4 @@
-import type { Project, ReleaseAction } from "@deploy-relay/contracts";
+import type { Project, ReleaseAction } from "@witness-ops/contracts";
 
 export interface CliRequest {
   readonly action: ReleaseAction;

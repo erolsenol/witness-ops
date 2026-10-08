@@ -1,6 +1,6 @@
 {
   "name": "deploy-witness",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "private": true,
   "description": "Verify that the expected commit is live after deployment.",
   "type": "module",
@@ -10,7 +10,7 @@
     "type": "git",
     "url": "git+https://github.com/erolsenol/witness-ops.git"
   },
-  "homepage": "https://github.com/erolsenol/deploy-witness#readme",
+  "homepage": "https://github.com/erolsenol/witness-ops#readme",
   "bugs": {
     "url": "https://github.com/erolsenol/witness-ops/issues"
   },

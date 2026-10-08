@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Card, Empty, Input, Layout, List, message, Modal, Select, Space, Tag, Typography } from "antd";
-import type { BuildArtifactSummary, CoolifyApplicationStatus, ProjectState, ReleaseEvidenceSnapshot, ReleaseRecordEvidence, RunAction, RunStatus } from "@deploy-relay/contracts";
+import type { BuildArtifactSummary, CoolifyApplicationStatus, ProjectState, ReleaseEvidenceSnapshot, ReleaseRecordEvidence, RunAction, RunStatus } from "@witness-ops/contracts";
 import { deployRun, getArtifacts, getCoolify, getEvents, getProjects, getReleaseEvidence, getRuns, openReport, rollbackRun, startRun } from "./api.ts";
 
 const { Header, Content } = Layout;

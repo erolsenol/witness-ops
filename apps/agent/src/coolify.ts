@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { CoolifySnapshot, Project } from "@deploy-relay/contracts";
+import type { CoolifySnapshot, Project } from "@witness-ops/contracts";
 
 const applicationSchema = z.object({
   uuid: z.string(),

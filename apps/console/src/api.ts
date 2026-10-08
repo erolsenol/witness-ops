@@ -12,7 +12,7 @@ import {
   type RunEvent,
   type RunRecord,
   type ReleaseEvidenceSnapshot,
-} from "@deploy-relay/contracts";
+} from "@witness-ops/contracts";
 
 async function json(path: string, init?: RequestInit): Promise<unknown> {
   const headers = new Headers(init?.headers);

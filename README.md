@@ -83,7 +83,7 @@ Existing single-project `WITNESS_RELEASE_*` environment settings still work. Con
 
 Rollback reads the remote release ledger and running image identities again after acquiring that lock. If the evidence changes while a request waits in the queue, the rollback is rejected before its native command starts; select and confirm the candidate again.
 
-The agent stores its SQLite journal and evidence reports under `~/Library/Application Support/WitnessOps` by default. Set `WITNESS_DATA_DIR` to override it. The old DeployRelay data directory is left in place; move data only after inspecting it. The original repositories and npm package versions remain available as archived migration references.
+The agent stores its SQLite journal and evidence reports under `~/Library/Application Support/WitnessOps` by default. Set `WITNESS_DATA_DIR` to override it. Existing DeployRelay data is not migrated automatically; inspect it before moving or deleting anything. The original repositories are archived migration references until the WitnessOps release and consumer migration are verified.
 
 The session token protects the operational API, including evidence downloads. A local process running as the same user can still inspect its own agent environment and files; use a trusted operator account. A browser opened without the printed session URL shows an unavailable agent.
 

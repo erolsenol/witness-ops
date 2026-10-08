@@ -1,6 +1,6 @@
 {
-  "name": "@deploy-relay/core",
-  "version": "0.1.0-alpha.4",
+  "name": "@witness-ops/core",
+  "version": "0.1.0-alpha.5",
   "private": true,
   "type": "module",
   "exports": {
@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@deploy-relay/contracts": "workspace:*"
+    "@witness-ops/contracts": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "26.6.4",

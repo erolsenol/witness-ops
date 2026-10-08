@@ -206,15 +206,15 @@ importers:
 
   apps/agent:
     dependencies:
-      '@deploy-relay/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      '@deploy-relay/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@fastify/static':
         specifier: 10.1.5
         version: 10.1.5
+      '@witness-ops/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@witness-ops/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       better-sqlite3:
         specifier: 13.0.3
         version: 13.0.3
@@ -240,12 +240,12 @@ importers:
 
   apps/console:
     dependencies:
-      '@deploy-relay/contracts':
-        specifier: workspace:*
-        version: link:../../packages/contracts
       '@tanstack/react-query':
         specifier: 5.104.1
         version: 5.104.1(react@19.3.0)
+      '@witness-ops/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       antd:
         specifier: 6.6.5
         version: 6.6.5(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -305,7 +305,7 @@ importers:
 
   packages/core:
     dependencies:
-      '@deploy-relay/contracts':
+      '@witness-ops/contracts':
         specifier: workspace:*
         version: link:../contracts
     devDependencies:

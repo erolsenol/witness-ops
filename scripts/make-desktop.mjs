@@ -34,7 +34,7 @@ mkdirSync(join(stagedAgent, "bin"), { recursive: true });
 cpSync(process.execPath, join(stagedAgent, "bin", "node"));
 runIconBuild();
 rmSync(stagedDesktop, { recursive: true, force: true });
-run(["--filter", "@deploy-relay/desktop", "deploy", "--node-linker", "hoisted", stagedDesktop]);
+run(["--filter", "@witness-ops/desktop", "deploy", "--node-linker", "hoisted", stagedDesktop]);
 rmSync(join(stagedDesktop, "out"), { recursive: true, force: true });
 cpSync(stagedAgent, join(stagedDesktop, "build", "agent"), { recursive: true, force: true });
 const forge = spawnSync(process.execPath, [

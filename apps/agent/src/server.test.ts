@@ -3,7 +3,7 @@ import { createServer } from "./server.ts";
 import { RunStore } from "./store.ts";
 import { Scheduler } from "./scheduler.ts";
 import type { FastifyInstance } from "fastify";
-import type { Project, ReleaseEvidenceSnapshot } from "@deploy-relay/contracts";
+import type { Project, ReleaseEvidenceSnapshot } from "@witness-ops/contracts";
 
 const servers: FastifyInstance[] = [];
 const stores: RunStore[] = [];

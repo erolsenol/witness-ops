@@ -51454,7 +51454,7 @@ async function verifyVercelDeployment(options) {
 }
 //# sourceMappingURL=verify.js.map
 ;// CONCATENATED MODULE: ./dist/version.js
-const TOOL_VERSION = "0.1.0-alpha.4";
+const TOOL_VERSION = "0.1.0-alpha.5";
 //# sourceMappingURL=version.js.map
 ;// CONCATENATED MODULE: ./dist/core/verify.js
 

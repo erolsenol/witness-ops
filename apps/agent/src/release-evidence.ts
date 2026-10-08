@@ -4,7 +4,7 @@ import {
   type ReleaseEvidenceSnapshot,
   type ReleaseRecordEvidence,
   type RuntimeImageEvidence,
-} from "@deploy-relay/contracts";
+} from "@witness-ops/contracts";
 import { z } from "zod";
 
 interface ContainerIdentity {

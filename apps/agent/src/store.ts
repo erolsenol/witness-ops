@@ -1,6 +1,6 @@
 import Database from "better-sqlite3";
 import { setTimeout as delay } from "node:timers/promises";
-import type { BuildArtifactSummary, RunAction, RunEvent, RunRecord, RunStatus } from "@deploy-relay/contracts";
+import type { BuildArtifactSummary, RunAction, RunEvent, RunRecord, RunStatus } from "@witness-ops/contracts";
 
 export interface BuildArtifact extends BuildArtifactSummary {
   readonly manifest: string;
