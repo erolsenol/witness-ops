@@ -1,0 +1,20 @@
+version: 2
+provider: coolify
+coolify:
+  baseUrl: https://coolify.example.com
+  resourceUuid: replace-with-resource-uuid
+deployment:
+  timeoutSeconds: 600
+  pollIntervalSeconds: 5
+probes:
+  - name: public-health
+    url: https://app.example.com/api/health
+    required: true
+    expectedStatus: 200
+  - name: deployed-commit
+    url: https://app.example.com/api/version
+    required: true
+    expectedStatus: 200
+    expectedJson:
+      path: commit
+      value: replace-with-runtime-commit

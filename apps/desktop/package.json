@@ -1,0 +1,20 @@
+{
+  "name": "@deploy-relay/desktop",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "dev": "pnpm build && electron .",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "package": "pnpm build && electron-forge package"
+  },
+  "devDependencies": {
+    "@electron-forge/cli": "8.0.1",
+    "@electron-forge/maker-zip": "8.0.1",
+    "@types/node": "26.6.4",
+    "electron": "44.5.1",
+    "typescript": "6.0.3"
+  }
+}

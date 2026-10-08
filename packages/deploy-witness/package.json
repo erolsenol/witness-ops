@@ -1,0 +1,71 @@
+{
+  "name": "deploy-witness",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "description": "Verify that the expected commit is live after deployment.",
+  "type": "module",
+  "license": "MIT",
+  "author": "erol.senol",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erolsenol/witness-ops.git"
+  },
+  "homepage": "https://github.com/erolsenol/deploy-witness#readme",
+  "bugs": {
+    "url": "https://github.com/erolsenol/witness-ops/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "bin": {
+    "deploy-witness": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "schemas",
+    "action.yml",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "SECURITY.md",
+    "docs/support-policy.md",
+    "docs/staging-validation.md",
+    "docs/ci-integrations.md",
+    "examples/gitlab-ci.yml",
+    "docs/adr"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && ncc build dist/action/index.js -o dist/action-bundle",
+    "build:types": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "schema:generate": "tsx scripts/generate-schemas.ts",
+    "schema:check": "tsx scripts/generate-schemas.ts --check",
+    "consumer:smoke": "node scripts/consumer-smoke.mjs",
+    "clean": "node -e \"import('node:fs').then(({rmSync}) => rmSync('dist', {recursive: true, force: true}))\"",
+    "prepack": "npm run build"
+  },
+  "dependencies": {
+    "@actions/core": "^3.0.1",
+    "commander": "^15.0.0",
+    "yaml": "^2.9.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@types/node": "^26.6.3",
+    "@vercel/ncc": "^0.45.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.2"
+  }
+}

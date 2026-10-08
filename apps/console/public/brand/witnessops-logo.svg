@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 72" role="img" aria-labelledby="title description">
+  <title id="title">WitnessOps</title>
+  <desc id="description">Release and recovery evidence</desc>
+  <defs>
+    <linearGradient id="tile" x1="8" y1="4" x2="58" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F86EE"/>
+      <stop offset="1" stop-color="#2855A7"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="64" height="64" rx="18" fill="#102443"/>
+  <rect x="8" y="8" width="56" height="56" rx="15" fill="url(#tile)"/>
+  <path d="M14 36h13m28 0h5m0 0-4-4m4 4-4 4" fill="none" stroke="#DCE8FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="16" cy="36" r="2.3" fill="#60D89B"/>
+  <rect x="27" y="24" width="28" height="24" rx="8" fill="#173A70" stroke="#F7FAFF" stroke-width="2.5"/>
+  <path d="m34 36 5 5 9-10" fill="none" stroke="#70E0AC" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <text x="82" y="38" fill="#142946" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="27" font-weight="700" letter-spacing="-1.1">WitnessOps</text>
+  <text x="84" y="56" fill="#687A95" font-family="Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="9" font-weight="700" letter-spacing="2.05">RELEASE AND RECOVERY EVIDENCE</text>
+</svg>

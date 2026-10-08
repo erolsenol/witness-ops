@@ -1,0 +1,59 @@
+{
+  "name": "@erol.senol/restore-witness",
+  "version": "0.1.0-alpha.1",
+  "private": true,
+  "description": "PostgreSQL backup management, isolated restore verification, monitoring, and webhook alerts.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/erolsenol/witness-ops.git"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "restore-witness": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run typecheck && npm test && npm run build",
+    "test:integration": "RW_INTEGRATION=1 vitest run tests/postgres.integration.test.ts",
+    "prepack": "npm run check",
+    "test:container": "node scripts/container-smoke.ts"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1147.0",
+    "@aws-sdk/lib-storage": "3.1147.0",
+    "zod": "4.6.5"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "examples",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "keywords": [
+    "postgresql",
+    "database-backup",
+    "restore",
+    "verification",
+    "cli",
+    "self-hosted"
+  ]
+}

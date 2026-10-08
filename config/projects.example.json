@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "projects": [
+    {
+      "id": "example",
+      "name": "Example application",
+      "root": "/absolute/path/to/application",
+      "productionBranch": "main",
+      "nodeVersion": "24.21.0",
+      "packageManager": "pnpm",
+      "coolifyApplications": [],
+      "checks": [
+        {
+          "label": "Project checks",
+          "command": "pnpm",
+          "args": ["check"]
+        }
+      ],
+      "deployVerification": {
+        "configPath": "/private/deploy-witness.yml"
+      },
+      "databaseRecovery": {
+        "configPath": "/private/restore-witness.json",
+        "projectId": "example",
+        "beforeDeploy": false
+      }
+    }
+  ]
+}

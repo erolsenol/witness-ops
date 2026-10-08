@@ -1,0 +1,65 @@
+name: Publish npm package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    environment: npm-publish
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+      - name: Verify release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: test "v$(node -p 'require("./package.json").version')" = "$RELEASE_TAG"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: git diff --exit-code -- dist/action-bundle/index.js
+      - name: Verify npm publisher account
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::Set NPM_TOKEN for the erol.senol account in the npm-publish environment."
+            exit 1
+          fi
+          test "$(npm whoami --registry=https://registry.npmjs.org)" = "erol.senol"
+      - name: Publish as erol.senol with provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: pnpm publish --access public --tag alpha --provenance --no-git-checks
+      - name: Wait for registry visibility and verify source commit
+        env:
+          PACKAGE_VERSION: ${{ github.ref_name }}
+        run: |
+          package_version="${PACKAGE_VERSION#v}"
+          for attempt in {1..48}; do
+            if npm view "@erol.senol/witness-ops@$package_version" version --json 2>/dev/null | grep -q "$package_version"; then break; fi
+            if [ "$attempt" -eq 48 ]; then exit 1; fi
+            sleep 10
+          done
+          node scripts/check-registry-release.mjs "$package_version"
+      - name: Smoke-test the published registry package
+        env:
+          PACKAGE_VERSION: ${{ github.ref_name }}
+        run: |
+          package_version="${PACKAGE_VERSION#v}"
+          consumer_dir="$RUNNER_TEMP/witness-consumer"
+          npm install --prefix "$consumer_dir" --no-save --no-audit --no-fund "@erol.senol/witness-ops@$package_version"
+          test "$("$consumer_dir/node_modules/.bin/witness" --version)" = "$package_version"
+          "$consumer_dir/node_modules/.bin/witness" deploy schema config-v2 > /dev/null
+          "$consumer_dir/node_modules/.bin/witness" db --help > /dev/null

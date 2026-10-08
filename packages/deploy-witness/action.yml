@@ -1,0 +1,39 @@
+name: DeployWitness
+description: Verify the deployed commit and runtime probes using read-only evidence.
+author: Erol Senol
+inputs:
+  config:
+    description: Path to deploy-witness YAML configuration.
+    required: true
+    default: deploy-witness.yml
+  coolify-token:
+    description: Read-only Coolify API token; required when provider is coolify.
+    required: false
+  vercel-token:
+    description: Vercel API token with read access to the configured project; required when provider is vercel.
+    required: false
+  expected-sha:
+    description: Expected full commit SHA; defaults to config or GITHUB_SHA.
+    required: false
+  started-after:
+    description: ISO timestamp captured before deployment; older deployments fail freshness correlation.
+    required: false
+  expected-image-digest:
+    description: Expected immutable OCI digest (sha256:<64 hex characters>); provider digest evidence is currently unsupported.
+    required: false
+  report-path:
+    description: JSON evidence output path.
+    required: false
+    default: deploy-witness-report.json
+  probe-concurrency:
+    description: Maximum concurrent runtime probes (integer from 1 to 20).
+    required: false
+    default: "4"
+outputs:
+  decision:
+    description: PASS, FAIL, or INCOMPLETE.
+  report-path:
+    description: Path to the JSON evidence report.
+runs:
+  using: node24
+  main: dist/action-bundle/index.js

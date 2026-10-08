@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "toolVersion": "0.1.0",
+  "runId": "55555555-5555-4555-8555-555555555555",
+  "createdAt": "2026-09-30T10:15:00.000Z",
+  "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "provider": "coolify",
+  "resourceUuid": "application-demo",
+  "decision": "FAIL",
+  "capabilities": [],
+  "checks": [
+    {
+      "id": "provider.coolify-api",
+      "category": "provider",
+      "required": true,
+      "status": "PASS",
+      "summary": "Coolify deployment API is reachable.",
+      "durationMs": 12,
+      "evidence": []
+    },
+    {
+      "id": "deployment.status",
+      "category": "deployment",
+      "required": true,
+      "status": "PASS",
+      "summary": "Coolify reports a successful terminal deployment.",
+      "durationMs": 2,
+      "evidence": []
+    },
+    {
+      "id": "deployment.commit",
+      "category": "deployment",
+      "required": true,
+      "status": "PASS",
+      "summary": "Coolify deployment commit matches the expected full SHA.",
+      "durationMs": 2,
+      "evidence": []
+    },
+    {
+      "id": "deployment.freshness",
+      "category": "deployment",
+      "required": true,
+      "status": "FAIL",
+      "summary": "Coolify deployment was not created strictly after the supplied run-start boundary.",
+      "durationMs": 2,
+      "evidence": [
+        {
+          "source": "coolify",
+          "observedAt": "2026-09-30T10:15:00.000Z",
+          "field": "created_at",
+          "expected": 1790763300000,
+          "observed": 1790763299000
+        }
+      ],
+      "failureCode": "DEPLOYMENT_STALE"
+    }
+  ]
+}

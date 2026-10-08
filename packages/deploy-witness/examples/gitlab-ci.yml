@@ -1,0 +1,27 @@
+stages:
+  - deploy
+  - verify
+
+deploy_staging:
+  stage: deploy
+  script:
+    - 'echo "DEPLOY_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" > deploy.env'
+    - ./ci/deploy-staging.sh # Replace with your non-production deployment command.
+  artifacts:
+    reports:
+      dotenv: deploy.env
+    expire_in: 1 hour
+
+verify_staging:
+  stage: verify
+  image: node:22
+  environment:
+    name: staging
+  needs:
+    - job: deploy_staging
+      artifacts: true
+  script:
+    - npm install --global --no-audit --no-fund deploy-witness@0.5.0
+    - export COOLIFY_API_TOKEN="$COOLIFY_READ_ONLY_TOKEN"
+    - deploy-witness config validate deploy-witness.yml
+    - deploy-witness verify --expected-sha "$CI_COMMIT_SHA" --started-after "$DEPLOY_STARTED_AT"

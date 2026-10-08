@@ -1,0 +1,7 @@
+tests/
+docs/
+tasks/
+src/
+coverage/
+.github/
+*.config.ts

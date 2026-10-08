@@ -1,0 +1,47 @@
+name: GitHub Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Verify release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: test "v$(node -p 'require("./package.json").version')" = "$RELEASE_TAG"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: git diff --exit-code -- dist/action-bundle/index.js
+      - run: pnpm make:desktop
+      - name: Build release assets
+        run: |
+          mkdir -p "$RUNNER_TEMP/witness-assets"
+          archive="$(find apps/desktop/out/make/zip -name 'WitnessOps-darwin-arm64-*.zip' -type f -print -quit)"
+          test -n "$archive"
+          unzip -tq "$archive"
+          cp "$archive" "$RUNNER_TEMP/witness-assets/"
+          pnpm --ignore-scripts pack --pack-destination "$RUNNER_TEMP/witness-assets"
+          cd "$RUNNER_TEMP/witness-assets"
+          shasum -a 256 *.zip *.tgz > SHA256SUMS
+          shasum -a 256 -c SHA256SUMS
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$RUNNER_TEMP"/witness-assets/* \
+            --verify-tag --title "WitnessOps $GITHUB_REF_NAME" --generate-notes --prerelease

@@ -1,0 +1,59 @@
+{
+  "name": "@erol.senol/witness-ops",
+  "version": "0.1.0-alpha.1",
+  "description": "Local release control, deployment verification, and PostgreSQL recovery evidence",
+  "private": false,
+  "type": "module",
+  "license": "MIT",
+  "publishConfig": { "access": "public", "tag": "alpha" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erolsenol/witness-ops.git"
+  },
+  "packageManager": "pnpm@12.4.2",
+  "engines": { "node": ">=24" },
+  "bin": { "witness": "src/cli.mjs" },
+  "files": [
+    ".node-version",
+    "src/cli.mjs",
+    "apps/agent/dist",
+    "apps/console/dist",
+    "packages/deploy-witness/dist",
+    "packages/deploy-witness/package.json",
+    "packages/deploy-witness/schemas",
+    "packages/restore-witness/dist",
+    "packages/restore-witness/package.json",
+    "config/projects.example.json",
+    "LICENSE",
+    "README.md",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "dev:agent": "pnpm --filter @deploy-relay/agent dev",
+    "dev:console": "pnpm --filter @deploy-relay/console dev",
+    "dev:desktop": "pnpm --filter @deploy-relay/desktop dev",
+    "build": "node scripts/clean-build.mjs && pnpm --filter deploy-witness build && pnpm --filter @erol.senol/restore-witness build && pnpm --filter @deploy-relay/console build && pnpm --filter @deploy-relay/agent build && pnpm --filter @deploy-relay/desktop build && node scripts/copy-action-bundle.mjs",
+    "typecheck": "pnpm -r --workspace-concurrency=1 --if-present typecheck",
+    "test": "vitest run && pnpm --filter deploy-witness test && pnpm --filter @erol.senol/restore-witness test",
+    "check": "pnpm typecheck && pnpm test && pnpm build",
+    "make:desktop": "node scripts/make-desktop.mjs",
+    "remote:tunnel": "node scripts/remote-tunnel.mjs",
+    "prepack": "pnpm check"
+  },
+  "dependencies": {
+    "@actions/core": "3.0.1",
+    "@aws-sdk/client-s3": "3.1147.0",
+    "@aws-sdk/lib-storage": "3.1147.0",
+    "@fastify/static": "10.1.5",
+    "better-sqlite3": "13.0.3",
+    "commander": "15.0.0",
+    "fastify": "5.12.5",
+    "yaml": "2.9.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  }
+}

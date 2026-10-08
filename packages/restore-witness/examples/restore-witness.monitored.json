@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "storageDirectory": "./backups",
+  "projects": {
+    "example": {
+      "environment": "development",
+      "connectionEnv": "EXAMPLE_DATABASE_URL",
+      "monitoring": { "maximumBackupAgeSeconds": 86400, "maximumVerificationAgeSeconds": 604800 },
+      "notification": {
+        "webhookUrlEnv": "RECOVERY_WEBHOOK_URL",
+        "bearerTokenEnv": "RECOVERY_WEBHOOK_TOKEN",
+        "timeoutSeconds": 10,
+        "retryDelaySeconds": 60
+      }
+    }
+  }
+}

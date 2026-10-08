@@ -1,0 +1,39 @@
+name: WitnessOps Deploy Verification
+description: Verify a deployed commit and runtime probes using read-only evidence.
+author: Erol Senol
+inputs:
+  config:
+    description: Path to deploy verification YAML configuration.
+    required: true
+    default: deploy-witness.yml
+  coolify-token:
+    description: Read-only Coolify API token.
+    required: false
+  vercel-token:
+    description: Read-only Vercel API token.
+    required: false
+  expected-sha:
+    description: Expected full commit SHA.
+    required: false
+  started-after:
+    description: ISO deployment start boundary.
+    required: false
+  expected-image-digest:
+    description: Expected immutable OCI digest.
+    required: false
+  report-path:
+    description: JSON evidence output path.
+    required: false
+    default: deploy-witness-report.json
+  probe-concurrency:
+    description: Maximum concurrent runtime probes.
+    required: false
+    default: "4"
+outputs:
+  decision:
+    description: PASS, FAIL, or INCOMPLETE.
+  report-path:
+    description: Path to the JSON evidence report.
+runs:
+  using: node24
+  main: dist/action-bundle/index.js

@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.vite/
+out/
+apps/desktop/build/
+coverage/
+.DS_Store
+*.log
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+.env
+.env.*
+!.env.example
+.release-artifacts/
+config/projects.json
+config/projects.local.json

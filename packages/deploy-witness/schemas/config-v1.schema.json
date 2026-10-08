@@ -1,0 +1,349 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "provider": {
+          "type": "string",
+          "const": "coolify"
+        },
+        "deployment": {
+          "type": "object",
+          "properties": {
+            "expectedSha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40,64}$"
+            },
+            "startedAfter": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "timeoutSeconds": {
+              "default": 600,
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 1800
+            },
+            "pollIntervalSeconds": {
+              "default": 5,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60
+            }
+          },
+          "additionalProperties": false
+        },
+        "probes": {
+          "default": [],
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "required": {
+                "default": true,
+                "type": "boolean"
+              },
+              "allowLocalHttp": {
+                "default": false,
+                "type": "boolean"
+              },
+              "expectedStatus": {
+                "default": 200,
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 599
+              },
+              "timeoutMs": {
+                "default": 5000,
+                "type": "integer",
+                "minimum": 250,
+                "maximum": 30000
+              },
+              "stability": {
+                "type": "object",
+                "properties": {
+                  "consecutiveSuccesses": {
+                    "default": 1,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "intervalMs": {
+                    "default": 1000,
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 10000
+                  }
+                },
+                "additionalProperties": false
+              },
+              "expectedHeader": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "additionalProperties": false
+              },
+              "expectedJson": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "value": {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "path",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "coolify": {
+          "type": "object",
+          "properties": {
+            "baseUrl": {
+              "type": "string",
+              "format": "uri"
+            },
+            "resourceUuid": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            }
+          },
+          "required": [
+            "baseUrl",
+            "resourceUuid"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version",
+        "provider",
+        "deployment",
+        "coolify"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "provider": {
+          "type": "string",
+          "const": "vercel"
+        },
+        "deployment": {
+          "type": "object",
+          "properties": {
+            "expectedSha": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40,64}$"
+            },
+            "startedAfter": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "timeoutSeconds": {
+              "default": 600,
+              "type": "integer",
+              "minimum": 10,
+              "maximum": 1800
+            },
+            "pollIntervalSeconds": {
+              "default": 5,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60
+            }
+          },
+          "additionalProperties": false
+        },
+        "probes": {
+          "default": [],
+          "maxItems": 20,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 64
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "required": {
+                "default": true,
+                "type": "boolean"
+              },
+              "allowLocalHttp": {
+                "default": false,
+                "type": "boolean"
+              },
+              "expectedStatus": {
+                "default": 200,
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 599
+              },
+              "timeoutMs": {
+                "default": 5000,
+                "type": "integer",
+                "minimum": 250,
+                "maximum": 30000
+              },
+              "stability": {
+                "type": "object",
+                "properties": {
+                  "consecutiveSuccesses": {
+                    "default": 1,
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 10
+                  },
+                  "intervalMs": {
+                    "default": 1000,
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 10000
+                  }
+                },
+                "additionalProperties": false
+              },
+              "expectedHeader": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "value": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "additionalProperties": false
+              },
+              "expectedJson": {
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "value": {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "path",
+                  "value"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "name",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "vercel": {
+          "type": "object",
+          "properties": {
+            "projectId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "teamId": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 128
+            },
+            "target": {
+              "type": "string",
+              "enum": [
+                "production",
+                "preview"
+              ]
+            }
+          },
+          "required": [
+            "projectId",
+            "target"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "version",
+        "provider",
+        "deployment",
+        "vercel"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$id": "https://raw.githubusercontent.com/erolsenol/deploy-witness/main/schemas/config-v1.schema.json",
+  "title": "DeployWitness Configuration v1"
+}

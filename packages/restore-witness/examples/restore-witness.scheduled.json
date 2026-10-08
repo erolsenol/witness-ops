@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "storageDirectory": "./backups",
+  "timeoutSeconds": 1800,
+  "minimumFreeBytes": 1073741824,
+  "projects": {
+    "example": {
+      "environment": "development",
+      "connectionEnv": "EXAMPLE_DATABASE_URL",
+      "assertions": [{ "schema": "public", "table": "accounts", "minimumRows": 1 }],
+      "schedule": {
+        "timeZone": "Europe/Istanbul",
+        "backupAt": "02:00",
+        "verifyAt": "03:00",
+        "upload": false,
+        "maxAttempts": 3,
+        "retryDelaySeconds": 300
+      },
+      "retention": { "timeZone": "Europe/Istanbul", "daily": 7, "weekly": 4, "monthly": 12 }
+    }
+  },
+  "restoreTargets": {}
+}

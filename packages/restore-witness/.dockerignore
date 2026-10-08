@@ -1,0 +1,13 @@
+*
+!Dockerfile
+!.dockerignore
+!package.json
+!package-lock.json
+!tsconfig.json
+!tsconfig.build.json
+!src/
+!src/**
+!container/
+!container/entrypoint.sh
+!container/LICENSE.docker-cli
+!LICENSE

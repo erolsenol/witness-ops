@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "toolVersion": "0.1.0",
+  "runId": "44444444-4444-4444-8444-444444444444",
+  "createdAt": "2026-09-30T10:15:00.000Z",
+  "expectedSha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "provider": "coolify",
+  "resourceUuid": "application-demo",
+  "decision": "PASS",
+  "capabilities": [],
+  "checks": [
+    {
+      "id": "provider.coolify-api",
+      "category": "provider",
+      "required": true,
+      "status": "PASS",
+      "summary": "Coolify deployment API is reachable.",
+      "durationMs": 12,
+      "evidence": []
+    },
+    {
+      "id": "deployment.status",
+      "category": "deployment",
+      "required": true,
+      "status": "PASS",
+      "summary": "Coolify reports a successful terminal deployment.",
+      "durationMs": 2,
+      "evidence": []
+    },
+    {
+      "id": "deployment.commit",
+      "category": "deployment",
+      "required": true,
+      "status": "PASS",
+      "summary": "Coolify deployment commit matches the expected full SHA.",
+      "durationMs": 2,
+      "evidence": []
+    },
+    {
+      "id": "deployment.freshness",
+      "category": "deployment",
+      "required": false,
+      "status": "WARN",
+      "summary": "No run-start boundary was supplied; this deployment cannot be correlated to the current CI run.",
+      "durationMs": 2,
+      "evidence": [],
+      "failureCode": "DEPLOYMENT_RUN_CORRELATION_UNAVAILABLE"
+    }
+  ]
+}

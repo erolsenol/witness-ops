@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: sudo apt-get update -qq && sudo apt-get install -y age
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+        env:
+          RW_AGE_BIN_DIRECTORY: /usr/bin
+      - name: Check committed Action bundle
+        run: git diff --exit-code -- dist/action-bundle/index.js
+      - name: Check npm package contents
+        run: |
+          pnpm --ignore-scripts pack --dry-run --json > "$RUNNER_TEMP/witness-pack.json"
+          node scripts/check-package-contents.mjs "$RUNNER_TEMP/witness-pack.json"
+
+  action-consumer:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Run Action from clean checkout without installing dependencies
+        id: witness
+        continue-on-error: true
+        uses: ./
+        with:
+          config: missing-consumer-config.yml
+          expected-sha: 0123456789abcdef0123456789abcdef01234567
+      - name: Confirm the Action rejected missing configuration
+        env:
+          ACTION_OUTCOME: ${{ steps.witness.outcome }}
+        run: test "$ACTION_OUTCOME" = failure
+
+  recovery-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        postgres-major: [16, 17, 18]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install matching PostgreSQL client tools
+        env:
+          PG_MAJOR: ${{ matrix.postgres-major }}
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail --silent --show-error -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" | sudo tee /etc/apt/sources.list.d/witness-ops-pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y "postgresql-client-$PG_MAJOR" age
+      - run: docker pull postgres:${{ matrix.postgres-major }}
+      - name: Start disposable S3-compatible storage
+        run: |
+          docker run -d --name witness-ci-s3 --memory 1g --cpus 1 -p 127.0.0.1:9000:9000 -v /data \
+            -e RUSTFS_ACCESS_KEY=witness-ci-access -e RUSTFS_SECRET_KEY=witness-ci-secret \
+            -e RUSTFS_CONSOLE_ENABLE=false -e RUSTFS_OBS_LOGGER_LEVEL=error \
+            rustfs/rustfs@sha256:1803faef57627e2d9c2e7d89d655d712ddded5389040054987163043fecb6a3c /data
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:9000/health > /dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @erol.senol/restore-witness test:integration
+        env:
+          RW_AGE_BIN_DIRECTORY: /usr/bin
+          RW_TEST_S3_ENDPOINT: http://127.0.0.1:9000
+          RW_TEST_S3_ACCESS: witness-ci-access
+          RW_TEST_S3_SECRET: witness-ci-secret
+          RW_TEST_MAJOR: ${{ matrix.postgres-major }}
+          RW_POSTGRES_BIN_DIRECTORY: /usr/lib/postgresql/${{ matrix.postgres-major }}/bin
+      - name: Remove disposable storage
+        if: always()
+        run: docker rm --force --volumes witness-ci-s3 || true
+
+  desktop:
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.4.2
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm make:desktop
+      - name: Verify archive
+        run: |
+          archive="$(find apps/desktop/out/make/zip -name 'WitnessOps-darwin-arm64-*.zip' -type f -print -quit)"
+          test -n "$archive"
+          unzip -tq "$archive"
