@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
 const path = process.argv[2];
-if (!path) throw new Error("Provide a pnpm pack JSON file.");
+if (!path) throw new Error("Provide an npm pack JSON file.");
 const result = JSON.parse(readFileSync(path, "utf8"));
 const packageInfo = Array.isArray(result) ? result[0] : result;
 const paths = new Set(packageInfo.files?.map((file) => file.path) ?? []);

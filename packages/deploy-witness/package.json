@@ -1,6 +1,6 @@
 {
   "name": "deploy-witness",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "private": true,
   "description": "Verify that the expected commit is live after deployment.",
   "type": "module",

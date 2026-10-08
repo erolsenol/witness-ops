@@ -37,7 +37,7 @@ jobs:
           unzip -tq "$archive"
           unzip -Z1 "$archive" | grep -q 'WitnessOps.app/Contents/Resources/agent/bin/node$'
           cp "$archive" "$RUNNER_TEMP/witness-assets/"
-          pnpm --ignore-scripts pack --pack-destination "$RUNNER_TEMP/witness-assets"
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/witness-assets"
           cd "$RUNNER_TEMP/witness-assets"
           shasum -a 256 *.zip *.tgz > SHA256SUMS
           shasum -a 256 -c SHA256SUMS

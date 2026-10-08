@@ -33,12 +33,12 @@ jobs:
         run: git diff --exit-code -- dist/action-bundle/index.js
       - name: Check npm package contents
         run: |
-          pnpm --ignore-scripts pack --dry-run --json > "$RUNNER_TEMP/witness-pack.json"
+          npm pack --ignore-scripts --dry-run --json > "$RUNNER_TEMP/witness-pack.json"
           node scripts/check-package-contents.mjs "$RUNNER_TEMP/witness-pack.json"
       - name: Install the single package as a clean Linux consumer
         run: |
           mkdir -p "$RUNNER_TEMP/witness-package" "$RUNNER_TEMP/witness-consumer"
-          pnpm --ignore-scripts pack --pack-destination "$RUNNER_TEMP/witness-package" > /dev/null
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/witness-package" > /dev/null
           package_version="$(node -p 'require("./package.json").version')"
           npm install --prefix "$RUNNER_TEMP/witness-consumer" --no-save --no-audit --no-fund \
             "$RUNNER_TEMP/witness-package/erol.senol-witness-ops-$package_version.tgz"

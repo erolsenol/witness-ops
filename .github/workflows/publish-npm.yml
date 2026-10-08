@@ -41,7 +41,7 @@ jobs:
             sleep 10
           done
           mkdir -p "$RUNNER_TEMP/witness-package"
-          pnpm --ignore-scripts pack --pack-destination "$RUNNER_TEMP/witness-package" > /dev/null
+          npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP/witness-package" > /dev/null
           node scripts/check-registry-release.mjs "$package_version" \
             "$RUNNER_TEMP/witness-package/erol.senol-witness-ops-$package_version.tgz"
       - name: Smoke-test the published registry package

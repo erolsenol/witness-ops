@@ -1,6 +1,6 @@
 {
   "name": "@erol.senol/witness-ops",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "description": "Local release control, deployment verification, and PostgreSQL recovery evidence",
   "private": false,
   "type": "module",
