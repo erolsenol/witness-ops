@@ -75,7 +75,7 @@ async function publish() {
   if (verifyCleanMain() !== head) throw new Error("Source changed while preparing the release; nothing was published.");
   const generatedNotes = mkdtempSync(join(tmpdir(), "witness-ops-release-"));
   try {
-    const fullNotes = `${readFileSync(notesPath, "utf8").trim()}\n\n## Local verification\n\n- \\`pnpm check\\` passed before packaging.\n- Apple Silicon ZIP integrity and SHA-256 were verified locally.\n`;
+    const fullNotes = `${readFileSync(notesPath, "utf8").trim()}\n\n## Local verification\n\n- pnpm check passed before packaging.\n- Apple Silicon ZIP integrity and SHA-256 were verified locally.\n`;
     const generatedNotesPath = join(generatedNotes, "release-notes.md");
     writeFileSync(generatedNotesPath, fullNotes);
     const args = ["release", "create", tag, zip, checksum, "--title", `WitnessOps ${tag}`, "--target", head, "--notes-file", generatedNotesPath];
