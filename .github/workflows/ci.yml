@@ -28,6 +28,7 @@ jobs:
         env:
           RW_AGE_BIN_DIRECTORY: /usr/bin
       - run: node scripts/agent-smoke.mjs
+      - run: node scripts/action-consumer-local-smoke.mjs
       - name: Check committed Action bundle
         run: git diff --exit-code -- dist/action-bundle/index.js
       - name: Check npm package contents

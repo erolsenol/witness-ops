@@ -29,10 +29,10 @@ const server = createServer((request, response) => {
   response.writeHead(404).end();
 });
 
-server.listen(0, "127.0.0.1", async () => {
+server.listen(0, async () => {
   const address = server.address();
   if (!address || typeof address === "string") throw new Error("Fixture port unavailable.");
-  const baseUrl = `http://127.0.0.1:${address.port}`;
+  const baseUrl = `http://localhost:${address.port}`;
   await writeFile(join(directory, "action-consumer.json"), JSON.stringify({
     version: 2,
     provider: "coolify",
